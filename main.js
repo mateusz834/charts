@@ -1,4 +1,4 @@
-function update(year) {
+function update(year, stored) {
 	const chart = document.getElementById("chart");
 	const el = document.createElement("div");
 	el.id = "chart";
@@ -31,7 +31,6 @@ function update(year) {
 
 			if (element.classList.contains("day")) {
 				click(element);
-				console.log(element);
 				element.classList.add("non-clickable");
 				setTimeout(() => element.classList.remove("non-clickable"), 500);
 			}
@@ -74,6 +73,9 @@ function update(year) {
 
 		const day = document.createElement("div");
 		day.classList.add("day");
+		if (stored != null && stored.includes(date.getTime())) {
+			day.classList.add("clicked");
+		}
 		day.dataset.date = date.toISOString();
 		week.appendChild(day);
 	}
@@ -94,22 +96,38 @@ function generate_git_cmds() {
 	const chart = document.getElementById("chart")
 	const cmd = document.createElement("code")
 	cmd.id = "cmd";
-	chart.querySelectorAll(".clicked").forEach((node) => {
+
+	const clicked = [];
+	chart.querySelectorAll(".clicked").forEach((node, index) => {
 		if (cmd.textContent !== "") {
 			cmd.textContent += "\n" + "git commit --date \"" + node.dataset.date + "\" -m \"charts\""
 		} else {
 			cmd.textContent = "git commit --date \"" + node.dataset.date + "\" -m \"charts\""
 		}
+		const date = Date.parse(node.dataset.date);
+		clicked[index] = date;
 	});
+
+	localStorage.setItem("clicked", JSON.stringify(clicked));
 	document.getElementById("cmd").replaceWith(cmd);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
 	const year = document.getElementById("year");
-	const now = new Date();
-	year.value = now.getFullYear();
-	update(now.getFullYear())
+	let date = new Date();
+
+	let stored = localStorage.getItem("clicked");
+	if (stored != null) {
+		stored = JSON.parse(stored);
+		if (stored.length != 0) {
+			date = new Date(stored[0]);
+		}
+	}
+
+	year.value = date.getFullYear();
+	update(date.getFullYear(), stored)
+
 	year.addEventListener("input", (y) => update(y.target.value));
-	document.getElementById("reset").addEventListener("click", () => update(year.value));
+	document.getElementById("reset").addEventListener("click", () => update(year.value, null));
 });
 
