@@ -1,0 +1,90 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+html {
+	height: 100%;
+}
+
+body {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+
+	background: lightblue;
+}
+
+main {
+	flex: 1 1 100%;
+	display: flex;
+	justify-content: center;
+
+	background: lightcyan;
+	margin: 3em 16em;
+	padding: 2em;
+	display: flex;
+}
+
+section {
+	display: flex;
+	flex-direction: column;
+}
+
+h1 {
+	font-size: 1.75rem;
+	margin-bottom: 1em;
+	text-align: center;
+}
+
+#chart {
+	margin-top: 2em;
+	margin-bottom: 2em;
+	display: flex;
+	flex-wrap: wrap;
+	border: 2px solid grey;
+	padding: 1em;
+	gap: 3px;
+}
+
+.day, .no-day {
+	margin-top: 3px;
+	margin-bottom: 3px;
+	padding: 5px;
+}
+
+.no-day {
+	background: black;
+}
+
+.day {
+	background: darkgray;
+}
+
+.day:hover {
+	background: lightgreen;
+}
+
+.day.clicked {
+	background: green;
+}
+
+.day.clicked:hover {
+	background: red;
+}
+
+h2 {
+	text-align: center;
+	margin-bottom: 1em;
+}
+
+#cmd {
+	background: limegreen;
+	margin: auto;
+	width: min-content;
+	padding: 1em;
+	overflow: scroll;
+	white-space: pre;
+	flex: 1 1 0;
+}
+
