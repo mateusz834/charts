@@ -94,6 +94,7 @@ function click(target) {
 }
 
 function generate_git_cmds() {
+	const commit_name = document.getElementById("commit-name").value;
 	const chart = document.getElementById("chart")
 	const cmd = document.createElement("code")
 	cmd.id = "cmd";
@@ -101,9 +102,9 @@ function generate_git_cmds() {
 	const clicked = [];
 	chart.querySelectorAll(".clicked").forEach((node, index) => {
 		if (cmd.textContent !== "") {
-			cmd.textContent += "\n" + "git commit --date \"" + node.dataset.date + "\" -m \"charts\""
+			cmd.textContent += "\n" + "git commit --date \"" + node.dataset.date + "\" -m \"" + commit_name + "\""
 		} else {
-			cmd.textContent = "git commit --date \"" + node.dataset.date + "\" -m \"charts\""
+			cmd.textContent = "git commit --date \"" + node.dataset.date + "\" -m \"" + commit_name + "\""
 		}
 		const date = Date.parse(node.dataset.date);
 		clicked[index] = date;
@@ -136,5 +137,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	year.addEventListener("input", (y) => update(y.target.value));
 	document.getElementById("reset").addEventListener("click", () => update(year.value, null));
+	document.getElementById("commit-name").addEventListener("input", () => {
+		generate_git_cmds();
+	});
 });
 
