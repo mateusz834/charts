@@ -18,8 +18,16 @@
 					<button id="reset">Reset</button>
 				</div>
 				<div id="chart"></div>
-				<h2>Git cmd reproducer</h2>
-				<code id="cmd"></code>
+				<div id="git-repro" class="hidden">
+					<h2>Git cmd reproducer</h2>
+					<div id="cmd-section">
+						<code id="cmd"></code>
+						<div id="cmd-ctrl">
+							<input id="commit-name" type="text" name="commit-name" value="charts">
+							<button>Copy to clipboard</button>
+						</div>
+					</div>
+				</div>
 			</section>
 		</main>
 	</body>

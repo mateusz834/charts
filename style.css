@@ -1,6 +1,7 @@
 * {
 	margin: 0;
 	padding: 0;
+	box-sizing: border-box;
 }
 
 html {
@@ -78,13 +79,43 @@ h2 {
 	margin-bottom: 1em;
 }
 
+#git-repro {
+	flex: 1 1 0;
+	height: 0px;
+
+	display: flex;
+	flex-direction: column;
+}
+
+#git-repro.hidden {
+	display: none;
+}
+
+#cmd-section {
+	flex: 1 1 0;
+
+	display: flex;
+	align-items: center;
+	height: 0px;
+}
+
 #cmd {
+	display: block;
+	padding: 2em;
 	background: limegreen;
 	margin: auto;
-	width: min-content;
-	padding: 1em;
-	overflow: scroll;
 	white-space: pre;
-	flex: 1 1 0;
+	overflow: scroll;
+	height: 100%;
+}
+
+#cmd-ctrl {
+	margin: 0 auto;
+}
+
+#cmd-ctrl > button,
+#cmd-ctrl > input {
+	display: block;
+	margin: 2em auto;
 }
 

@@ -11,10 +11,11 @@ function update(year, stored) {
 		if (e.button != 0) {
 			return
 		}
+		e.preventDefault();
 		down = true;
 		downElement = e.target;
 	});
-	el.addEventListener("mouseup", (e) => {
+	document.body.addEventListener("mouseup", (e) => {
 		if (e.button != 0) {
 			return
 		}
@@ -107,6 +108,12 @@ function generate_git_cmds() {
 		const date = Date.parse(node.dataset.date);
 		clicked[index] = date;
 	});
+
+	if (clicked.length == 0) {
+		document.getElementById("git-repro").classList.add("hidden")
+	} else {
+		document.getElementById("git-repro").classList.remove("hidden")
+	}
 
 	localStorage.setItem("clicked", JSON.stringify(clicked));
 	document.getElementById("cmd").replaceWith(cmd);
