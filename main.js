@@ -135,7 +135,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	year.value = date.getFullYear();
 	update(date.getFullYear(), stored)
 
-	year.addEventListener("input", (y) => update(y.target.value));
+	year.addEventListener("input", (y) => {
+		if (year.value.length >= 4) {
+			update(y.target.value)
+		} else {
+			document.getElementById("chart").innerText = "";
+		}
+	});
 	document.getElementById("reset").addEventListener("click", () => update(year.value, null));
 	document.getElementById("commit-name").addEventListener("input", () => {
 		generate_git_cmds();
