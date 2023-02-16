@@ -9,9 +9,6 @@ body {
 }
 
 .container {
-	display: flex;
-	flex-direction: column;
-
 	padding: 1em 0.5em;
 	max-width: max-content;
 	margin: 0 auto;
@@ -73,21 +70,8 @@ body {
 	background: red;
 }
 
-.chart-git-reproducer  {
-	flex-grow: 1;
-	display: flex;
-	flex-direction: column;
-}
-
 .chart-git-reproducer > h2 {
 	margin: 0.75em 0;
-}
-
-#cmd-section {
-	flex-grow: 1;
-
-	display: flex;
-	flex-direction: column;
 }
 
 #cmd-ctrl  {
@@ -162,4 +146,13 @@ body {
 }
 .button-yellow:active {
 	background: #d4e833;
+}
+
+.flex-column {
+	display: flex;
+	flex-direction: column;
+}
+
+.flex-grow {
+	flex-grow: 1;
 }
