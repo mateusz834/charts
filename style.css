@@ -36,27 +36,6 @@ body {
 	margin-left: 1em;
 }
 
-button {
-	padding: 0.5em 1.5em;
-	font-weight: 600;
-	border-radius: 1em;
-	border: none;
-}
-
-button:active {
-	outline: 2px lightblue solid;
-}
-
-#reset {
-	background: #f75c5e;
-}
-#reset:hover {
-	background: #fc4244;
-}
-#reset:active {
-	background: #fa3437;
-}
-
 .chart {
 	display: flex;
 	overflow-x: scroll;
@@ -122,16 +101,6 @@ button:active {
 	margin-right: 1em;
 }
 
-#copy-to-clipboard {
-	background: #ebfa7a;
-}
-#copy-to-clipboard:hover {
-	background: #e6f760;
-}
-#copy-to-clipboard:active {
-	background: #d4e833;
-}
-
 #commit-name {
 	width: 5rem;
 	border: none;
@@ -162,4 +131,35 @@ button:active {
 	html, body, main {
 		height: 100%;
 	}
+}
+
+.button {
+	padding: 0.5em 1.5em;
+	font-weight: 600;
+	border-radius: 1em;
+	border: none;
+}
+
+.button:active {
+	outline: 2px lightblue solid;
+}
+
+.button.button-red {
+	background: #f75c5e;
+}
+.button-red:hover {
+	background: #fc4244;
+}
+.button-red:active {
+	background: #fa3437;
+}
+
+.button-yellow {
+	background: #ebfa7a;
+}
+.button-yellow:hover {
+	background: #e6f760;
+}
+.button-yellow:active {
+	background: #d4e833;
 }
