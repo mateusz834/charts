@@ -4,10 +4,6 @@
 	box-sizing: border-box;
 }
 
-html, body, main {
-	height: 100%;
-}
-
 body {
 	background: #EAFFFD;
 }
@@ -25,6 +21,40 @@ body {
 
 .chart-controls {
 	margin: 1.5em 0;
+}
+
+.chart-controls > label {
+	background: #cafaf6;
+	padding: 0.25em 1.5em;
+	border-radius: 1em;
+	margin-right: 1em;
+}
+
+#year {
+	width: 5rem;
+	border: none;
+	margin-left: 1em;
+}
+
+button {
+	padding: 0.5em 1.5em;
+	font-weight: 600;
+	border-radius: 1em;
+	border: none;
+}
+
+button:active {
+	outline: 2px lightblue solid;
+}
+
+#reset {
+	background: #f75c5e;
+}
+#reset:hover {
+	background: #fc4244;
+}
+#reset:active {
+	background: #fa3437;
 }
 
 .chart {
@@ -81,25 +111,55 @@ body {
 	flex-direction: column;
 }
 
-.cmd-wrapper {
-	display: flex;
-	margin-bottom: 1rem;
+#cmd-ctrl  {
+	margin-bottom: 0.5em;
 }
 
-@media (min-height: 700px) {
-	.cmd-wrapper {
-		flex-grow: 1;
-		height: 0;
-	}
+#cmd-ctrl > label {
+	background: #cafaf6;
+	padding: 0.25em 1em;
+	border-radius: 1em;
+	margin-right: 1em;
+}
+
+#copy-to-clipboard {
+	background: #ebfa7a;
+}
+#copy-to-clipboard:hover {
+	background: #e6f760;
+}
+#copy-to-clipboard:active {
+	background: #d4e833;
+}
+
+#commit-name {
+	width: 5rem;
+	border: none;
+	margin-left: 1em;
+}
+
+.cmd-wrapper {
+	display: flex;
 }
 
 #cmd {
 	overflow: scroll;
-	padding: 1rem 1.25rem;
+	padding: 0 0.75rem;
 	white-space: pre;
-	margin: 0 auto;
+	margin: 0.5rem auto;
 }
 
 .hidden {
 	display: none;
+}
+
+@media (min-height: 40rem) {
+	.cmd-wrapper {
+		flex-grow: 1;
+		height: 0;
+	}
+
+	html, body, main {
+		height: 100%;
+	}
 }
