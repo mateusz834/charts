@@ -1,7 +1,7 @@
 function update(year, stored) {
-	const chart = document.getElementById("chart");
+	const chart = document.querySelector(".chart");
 	const el = document.createElement("div");
-	el.id = "chart";
+	el.classList.add("chart");
 
 	el.addEventListener("click", (e) => click(e.target));
 
@@ -95,7 +95,7 @@ function click(target) {
 
 function generate_git_cmds() {
 	const commit_name = document.getElementById("commit-name").value;
-	const chart = document.getElementById("chart")
+	const chart = document.querySelector(".chart")
 	const cmd = document.createElement("code")
 	cmd.id = "cmd";
 
@@ -111,9 +111,9 @@ function generate_git_cmds() {
 	});
 
 	if (clicked.length == 0) {
-		document.getElementById("git-repro").classList.add("hidden")
+		document.querySelector(".chart-git-reproducer").classList.add("hidden")
 	} else {
-		document.getElementById("git-repro").classList.remove("hidden")
+		document.querySelector(".chart-git-reproducer").classList.remove("hidden")
 	}
 
 	localStorage.setItem("clicked", JSON.stringify(clicked));
@@ -139,12 +139,15 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (year.value.length >= 4) {
 			update(y.target.value)
 		} else {
-			document.getElementById("chart").innerText = "";
+			document.querySelector(".chart").innerText = "";
 		}
 	});
 	document.getElementById("reset").addEventListener("click", () => update(year.value, null));
 	document.getElementById("commit-name").addEventListener("input", () => {
 		generate_git_cmds();
+	});
+	document.getElementById("copy-to-clipboard").addEventListener("click", () => {
+		navigator.clipboard.writeText(document.getElementById("cmd").innerHTML);
 	});
 });
 

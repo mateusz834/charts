@@ -9,22 +9,31 @@
 	</head>
 	<body>
 		<main>
-			<section>
-				<header>
+			<section class="container">
+				<header class="container-header">
 					<h1>Generate your unique github summary chart</h1>
 				</header>
-				<div>
+
+				<div class="chart-controls">
+					<label for="year">Year:</label>
 					<input id="year" type="number" name="year">
 					<button id="reset">Reset</button>
 				</div>
-				<div id="chart"></div>
-				<div id="git-repro" class="hidden">
+
+				<div>
+					<div class="chart"></div>
+				</div>
+
+				<div class="chart-git-reproducer hidden">
 					<h2>Git cmd reproducer</h2>
 					<div id="cmd-section">
-						<code id="cmd"></code>
 						<div id="cmd-ctrl">
+							<label for="commit-name">Commit message:</label>
 							<input id="commit-name" type="text" name="commit-name" autocomplete="off" value="charts">
-							<button>Copy to clipboard</button>
+							<button id="copy-to-clipboard" >Copy to clipboard</button>
+						</div>
+						<div class="cmd-wrapper">
+							<code id="cmd"></code>
 						</div>
 					</div>
 				</div>

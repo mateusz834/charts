@@ -4,48 +4,39 @@
 	box-sizing: border-box;
 }
 
-html {
+html, body, main {
 	height: 100%;
 }
 
 body {
+	background: #EAFFFD;
+}
+
+.container {
+	display: flex;
+	flex-direction: column;
+
+	padding: 1em 0.5em;
+	max-width: max-content;
+	margin: 0 auto;
+	/*height: max(100%, 600px); */
 	height: 100%;
-	display: flex;
-	flex-direction: column;
-
-	background: lightblue;
-}
-
-main {
-	flex: 1 1 100%;
-	display: flex;
-	justify-content: center;
-
-	background: lightcyan;
-	margin: 3em 16em;
-	padding: 2em;
-	display: flex;
-}
-
-section {
-	display: flex;
-	flex-direction: column;
-}
-
-h1 {
-	font-size: 1.75rem;
-	margin-bottom: 1em;
 	text-align: center;
 }
 
-#chart {
-	margin-top: 2em;
-	margin-bottom: 2em;
+.chart-controls {
+	margin: 1.5em 0;
+}
+
+.chart {
 	display: flex;
-	flex-wrap: wrap;
-	border: 2px solid grey;
-	padding: 1em;
+	overflow-x: scroll;
 	gap: 3px;
+	border: 2px solid grey;
+	padding: min(max(1vw, 6px), 1rem);
+	background: #cafaf6;
+	margin: 0 auto;
+	max-width: max-content;
 }
 
 .day, .no-day {
@@ -54,12 +45,12 @@ h1 {
 	padding: 5px;
 }
 
-.no-day {
-	background: black;
-}
-
 .day {
 	background: darkgray;
+}
+
+.no-day {
+	background: black;
 }
 
 .day:hover {
@@ -74,57 +65,46 @@ h1 {
 	background: red;
 }
 
-h2 {
-	text-align: center;
-	margin-bottom: 1em;
-}
-
-#git-repro {
-	flex: 1 1 0;
-	height: 0px;
-
+.chart-git-reproducer  {
+	flex-grow: 1;
 	display: flex;
 	flex-direction: column;
-	border: 2px solid grey;
-	padding: 1em;
 }
 
-#git-repro.hidden {
-	display: none;
+.chart-git-reproducer > h2 {
+	margin: 0.75em 0;
 }
 
 #cmd-section {
-	flex: 1 1 0;
+	flex-grow: 1;
 
 	display: flex;
-	align-items: center;
-	height: 0px;
-	gap: 1.5em;
-}
-
-#cmd {
-	display: block;
-	padding: 1em;
-	background: limegreen;
-	margin: auto;
-	white-space: pre;
-	overflow: scroll;
-	height: 100%;
-	text-align: center;
-	overflow-wrap: wrap;
-
-	width: 0px;
-	flex-grow: 1;
-	margin: 0 auto;
+	flex-direction: column;
 }
 
 #cmd-ctrl {
+	padding-bottom: 1rem;
+}
+
+.cmd-wrapper {
+	display: flex;
+	margin-bottom: 1rem;
+}
+
+@media (min-height: 700px) {
+	.cmd-wrapper {
+		flex-grow: 1;
+		height: 0;
+	}
+}
+
+#cmd {
+	overflow: scroll;
+	padding: 0 1.25rem;
+	white-space: pre;
 	margin: 0 auto;
 }
 
-#cmd-ctrl > button,
-#cmd-ctrl > input {
-	display: block;
-	margin: 2em auto;
+.hidden {
+	display: none;
 }
-
