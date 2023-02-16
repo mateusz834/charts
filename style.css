@@ -19,7 +19,6 @@ body {
 	padding: 1em 0.5em;
 	max-width: max-content;
 	margin: 0 auto;
-	/*height: max(100%, 600px); */
 	height: 100%;
 	text-align: center;
 }
@@ -82,10 +81,6 @@ body {
 	flex-direction: column;
 }
 
-#cmd-ctrl {
-	padding-bottom: 1rem;
-}
-
 .cmd-wrapper {
 	display: flex;
 	margin-bottom: 1rem;
@@ -100,7 +95,7 @@ body {
 
 #cmd {
 	overflow: scroll;
-	padding: 0 1.25rem;
+	padding: 1rem 1.25rem;
 	white-space: pre;
 	margin: 0 auto;
 }
