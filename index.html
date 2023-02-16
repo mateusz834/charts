@@ -9,30 +9,30 @@
 	</head>
 	<body>
 		<main>
-			<section class="container flex-column">
-				<header class="container-header">
+			<section class="container flex-column gap-15">
+				<header>
 					<h1>Generate your unique github summary chart</h1>
 				</header>
 
-				<div class="chart-controls">
-					<label>
+				<div>
+					<label class="inputlabel">
 						Year:
-						<input id="year" type="number" name="year">
+						<input class="input" id="year" type="number" name="year">
 					</label>
 					<button id="reset" class="button button-red">Reset</button>
 				</div>
 
 				<div>
-					<div class="chart"></div>
+					<div id="chart"></div>
 				</div>
 
-				<div class="chart-git-reproducer flex-grow flex-column hidden">
+				<div id="chart-git-reproducer" class="flex-grow flex-column gap-15 hidden">
 					<h2>Git cmd reproducer</h2>
-					<div id="cmd-section" class="flex-grow flex-column">
-						<div id="cmd-ctrl">
-							<label>
+					<div class="flex-grow flex-column gap-05">
+						<div>
+							<label class="inputlabel">
 								Commit message:
-								<input id="commit-name" type="text" name="commit-name" autocomplete="off" value="charts">
+								<input id="commit-name" class="input" type="text" name="commit-name" autocomplete="off" value="charts">
 							</label>
 							<button id="copy-to-clipboard" class="button button-yellow">Copy to clipboard</button>
 						</div>

@@ -10,33 +10,15 @@ body {
 
 .container {
 	padding: 1em 0.5em;
-	max-width: max-content;
-	margin: 0 auto;
 	height: 100%;
 	text-align: center;
 }
 
-.chart-controls {
-	margin: 1.5em 0;
-}
-
-.chart-controls > label {
-	background: #cafaf6;
-	padding: 0.25em 1.5em;
-	border-radius: 1em;
-	margin-right: 1em;
-}
-
-#year {
-	width: 5rem;
-	border: none;
-	margin-left: 1em;
-}
-
-.chart {
+#chart {
 	display: flex;
-	overflow-x: scroll;
 	gap: 3px;
+
+	overflow-x: scroll;
 	border: 2px solid grey;
 	padding: min(max(1vw, 6px), 1rem);
 	background: #cafaf6;
@@ -70,27 +52,6 @@ body {
 	background: red;
 }
 
-.chart-git-reproducer > h2 {
-	margin: 0.75em 0;
-}
-
-#cmd-ctrl  {
-	margin-bottom: 0.5em;
-}
-
-#cmd-ctrl > label {
-	background: #cafaf6;
-	padding: 0.25em 1em;
-	border-radius: 1em;
-	margin-right: 1em;
-}
-
-#commit-name {
-	width: 5rem;
-	border: none;
-	margin-left: 1em;
-}
-
 .cmd-wrapper {
 	display: flex;
 }
@@ -100,10 +61,6 @@ body {
 	padding: 0 0.75rem;
 	white-space: pre;
 	margin: 0.5rem auto;
-}
-
-.hidden {
-	display: none;
 }
 
 @media (min-height: 40rem) {
@@ -116,6 +73,20 @@ body {
 		height: 100%;
 	}
 }
+
+.inputlabel {
+	background: #cafaf6;
+	padding: 0.25em 1.5em;
+	border-radius: 1em;
+	margin-right: 1em;
+}
+
+.input {
+	width: 5rem;
+	border: none;
+	margin-left: 1em;
+}
+
 
 .button {
 	padding: 0.5em 1.5em;
@@ -155,4 +126,16 @@ body {
 
 .flex-grow {
 	flex-grow: 1;
+}
+
+.gap-15 {
+	gap: 1.5em;
+}
+
+.gap-05 {
+	gap: 0.5em;
+}
+
+.hidden {
+	display: none;
 }

@@ -1,7 +1,7 @@
 function update(year, stored) {
-	const chart = document.querySelector(".chart");
+	const chart = document.getElementById("chart");
 	const el = document.createElement("div");
-	el.classList.add("chart");
+	el.id = "chart";
 
 	el.addEventListener("click", (e) => click(e.target));
 
@@ -95,7 +95,7 @@ function click(target) {
 
 function generate_git_cmds() {
 	const commit_name = document.getElementById("commit-name").value;
-	const chart = document.querySelector(".chart")
+	const chart = document.getElementById("chart")
 	const cmd = document.createElement("code")
 	cmd.id = "cmd";
 
@@ -111,9 +111,9 @@ function generate_git_cmds() {
 	});
 
 	if (clicked.length == 0) {
-		document.querySelector(".chart-git-reproducer").classList.add("hidden")
+		document.getElementById("chart-git-reproducer").classList.add("hidden")
 	} else {
-		document.querySelector(".chart-git-reproducer").classList.remove("hidden")
+		document.getElementById("chart-git-reproducer").classList.remove("hidden")
 	}
 
 	localStorage.setItem("clicked", JSON.stringify(clicked));
@@ -139,7 +139,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (year.value.length >= 4) {
 			update(y.target.value)
 		} else {
-			document.querySelector(".chart").innerText = "";
+			const chart = document.getElementById("chart");
+			chart.innerText = "";
 		}
 	});
 	document.getElementById("reset").addEventListener("click", () => update(year.value, null));
