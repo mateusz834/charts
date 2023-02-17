@@ -1,154 +1,158 @@
-function update(year, stored) {
-	const chart = document.getElementById("chart");
-	const el = document.createElement("div");
-	el.id = "chart";
+document.addEventListener("DOMContentLoaded", () => {
+	var chart = {
+		yearInput: document.getElementById("year"),
+		chartResetButton : document.getElementById("reset"),
+		chart: document.getElementById("chart"),
+		cmd: document.getElementById("cmd"),
+		commitMsgInput: document.getElementById("commit-name"),
+		copyToClipboardButton: document.getElementById("copy-to-clipboard"),
+		gitReproducer: document.getElementById("chart-git-reproducer"),
 
-	el.addEventListener("click", (e) => click(e.target));
-
-	var down = false;
-	var downElement = null;
-	el.addEventListener("mousedown", (e) => {
-		if (e.button != 0) {
-			return
-		}
-		e.preventDefault();
-		down = true;
-		downElement = e.target;
-	});
-	document.body.addEventListener("mouseup", (e) => {
-		if (e.button != 0) {
-			return
-		}
-		down = false;
-	});
-	el.addEventListener("mousemove", (e) => {
-		if (!down) {
-			return
-		}
-
-		if (downElement != null && e.target != downElement) {
-			const element = downElement;
-			downElement = null;
-
-			if (element.classList.contains("day")) {
-				click(element);
-				element.classList.add("non-clickable");
-				setTimeout(() => element.classList.remove("non-clickable"), 500);
-			}
-		}
-
-		if (e.target.classList.contains("day")) {
-			if (e.target.classList.contains("non-clickable") || e.target == downElement) {
-				return
+		start: function() {
+			let date = new Date();
+			let saved = this.getSavedChart();
+			if (saved != null && saved.length != 0) {
+				date = new Date(saved[0]);
 			}
 
-			click(e.target);
-			e.target.classList.add("non-clickable");
-			setTimeout(() => e.target.classList.remove("non-clickable"), 500);
-		}
-	});
+			this.yearInput.value = date.getFullYear();
+			this.generateChart(date.getFullYear(), saved)
 
-	let date = new Date(year, 0, 0);
-	let week = undefined;
+			this.yearInput.addEventListener("input", () => this.generateChart(this.yearInput.value, null));
+			this.chartResetButton.addEventListener("click", () => this.generateChart(this.yearInput.value, null));
+			this.commitMsgInput.addEventListener("input", () => this.chartUpdate());
+			this.copyToClipboardButton.addEventListener("click", () => navigator.clipboard.writeText(cmd.innerText));
 
-	while (true) {
-		date = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
-		if (date.getFullYear() != year) {
-			break;
-		}
+			this.chart.addEventListener("click", (e) => {
+				if (e.target.classList.contains("day")) {
+					this.click(e.target);
+				}
+			});
+			this.chart.addEventListener("mousedown", (e) => {
+				if (e.button != 0) {
+					return;
+				}
+				e.preventDefault();
+				this.down = true;
+				this.downElement = e.target;
+			});
+			document.addEventListener("mouseup", (e) => {
+				if (e.button != 0) {
+					return;
+				}
+				this.down = false;
+			});
+			this.chart.addEventListener("mousemove", (e) => {
+				if (!this.down) {
+					return;
+				}
 
-		if (date.getDay() == 0 || week == undefined) {
-			week = document.createElement("div");
-			week.classList.add("week");
-			el.appendChild(week);
-		}
+				if (this.downElement !== null && e.target !== this.downElement) {
+					const element = this.downElement;
+					this.downElement = null;
 
-		if (date.getMonth() == 0 && date.getDate() == 1) {
-			const day = date.getDay();
-			for (let i = 0; i < day; i++) {
+					if (element.classList.contains("day")) {
+						this.clickWithBlock(element);
+					}
+				}
+
+				if (e.target.classList.contains("day")) {
+					if (e.target.classList.contains("non-clickable") || e.target === this.downElement) {
+						return;
+					}
+					this.clickWithBlock(e.target);
+				}
+			});
+		},
+
+		clickWithBlock: function(element) {
+			this.click(element);
+			element.classList.add("non-clickable");
+			setTimeout(() => element.classList.remove("non-clickable"), 300);
+		},
+
+		click: function(element) {
+			element.classList.toggle("clicked");
+			this.chartUpdate();
+		},
+
+		getSavedChart: function() {
+			let stored = localStorage.getItem("clicked");
+			if (stored != null) {
+				return JSON.parse(stored);
+			}
+			return null;
+		},
+
+		generateChart: function(year, stored) {
+			if (this.yearInput.value.length < 4) {
+				this.chart.classList.add("hidden");
+				this.chart.innerHTML = "";
+				return;
+			}
+
+			let date = new Date(year, 0, 0);
+
+			let weeks = [];
+			let week = undefined;
+
+			while (true) {
+				date = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+				if (date.getFullYear() != year) {
+					break;
+				}
+
+				if (date.getDay() == 0 || week == undefined) {
+					week = document.createElement("div");
+					week.classList.add("week");
+					weeks.push(week);
+				}
+
+				if (date.getMonth() == 0 && date.getDate() == 1) {
+					const day = date.getDay();
+					for (let i = 0; i < day; i++) {
+						const day = document.createElement("div");
+						day.classList.add("no-day");
+						week.appendChild(day);
+					}
+				}
+
 				const day = document.createElement("div");
-				day.classList.add("no-day");
+				day.classList.add("day");
+				if (stored != null && stored.includes(date.getTime())) {
+					day.classList.add("clicked");
+				}
+				day.dataset.date = date.toISOString();
 				week.appendChild(day);
 			}
-		}
 
-		const day = document.createElement("div");
-		day.classList.add("day");
-		if (stored != null && stored.includes(date.getTime())) {
-			day.classList.add("clicked");
-		}
-		day.dataset.date = date.toISOString();
-		week.appendChild(day);
-	}
+			this.chart.replaceChildren(...weeks);
+			this.chart.classList.remove("hidden");
+			this.gitReproducer.classList.add("hidden");
+			this.cmd.innerHTML = "";
+			this.chartUpdate();
+		},
 
-	chart.replaceWith(el);
-	generate_git_cmds();
-}
+		chartUpdate: function() {
+			const clicked = [];
+			let cmds = "";
+			this.chart.querySelectorAll(".clicked").forEach((node, index) => {
+				if (cmds !== "") {
+					cmds += "\n" + "git commit --date \"" + node.dataset.date + "\" -m \"" + this.commitMsgInput.value + "\""
+				} else {
+					cmds = "git commit --date \"" + node.dataset.date + "\" -m \"" + this.commitMsgInput.value + "\""
+				}
+				clicked[index] = Date.parse(node.dataset.date);
+			});
 
-function click(target) {
-	if (!target.classList.contains("day")) {
-		return;
-	}
-	target.classList.toggle("clicked");
-	generate_git_cmds()
-}
-
-function generate_git_cmds() {
-	const commit_name = document.getElementById("commit-name").value;
-	const chart = document.getElementById("chart")
-	const cmd = document.createElement("code")
-	cmd.id = "cmd";
-
-	const clicked = [];
-	chart.querySelectorAll(".clicked").forEach((node, index) => {
-		if (cmd.textContent !== "") {
-			cmd.textContent += "\n" + "git commit --date \"" + node.dataset.date + "\" -m \"" + commit_name + "\""
-		} else {
-			cmd.textContent = "git commit --date \"" + node.dataset.date + "\" -m \"" + commit_name + "\""
-		}
-		const date = Date.parse(node.dataset.date);
-		clicked[index] = date;
-	});
-
-	if (clicked.length == 0) {
-		document.getElementById("chart-git-reproducer").classList.add("hidden")
-	} else {
-		document.getElementById("chart-git-reproducer").classList.remove("hidden")
-	}
-
-	localStorage.setItem("clicked", JSON.stringify(clicked));
-	document.getElementById("cmd").replaceWith(cmd);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-	const year = document.getElementById("year");
-	let date = new Date();
-
-	let stored = localStorage.getItem("clicked");
-	if (stored != null) {
-		stored = JSON.parse(stored);
-		if (stored.length != 0) {
-			date = new Date(stored[0]);
+			if (clicked.length !== 0) {
+				this.cmd.innerText = cmds;
+				this.gitReproducer.classList.remove("hidden");
+				localStorage.setItem("clicked", JSON.stringify(clicked));
+			}
 		}
 	}
-
-	year.value = date.getFullYear();
-	update(date.getFullYear(), stored)
-
-	year.addEventListener("input", (y) => {
-		if (year.value.length >= 4) {
-			update(y.target.value)
-		} else {
-			const chart = document.getElementById("chart");
-			chart.innerText = "";
-		}
-	});
-	document.getElementById("reset").addEventListener("click", () => update(year.value, null));
-	document.getElementById("commit-name").addEventListener("input", () => {
-		generate_git_cmds();
-	});
-	document.getElementById("copy-to-clipboard").addEventListener("click", () => {
-		navigator.clipboard.writeText(document.getElementById("cmd").innerHTML);
-	});
+	chart.start();
 });
+
 
