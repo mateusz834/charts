@@ -26,9 +26,13 @@ body {
 	max-width: max-content;
 }
 
+.week {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
 .day, .no-day {
-	margin-top: 3px;
-	margin-bottom: 3px;
 	padding: 5px;
 }
 
