@@ -87,6 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		generateChart: function(year, stored) {
 			if (this.yearInput.value.length < 4) {
 				this.chart.classList.add("hidden");
+				this.gitReproducer.classList.add("hidden");
+				this.cmd.innerHTML = "";
 				this.chart.innerHTML = "";
 				return;
 			}
