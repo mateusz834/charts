@@ -78,11 +78,58 @@ body {
 	}
 }
 
+#share-modal {
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: rgba(0,0,0,0.5);
+	padding: 0.5em;
+}
+
+#share-modal > div {
+	position: relative;
+	background: #EAFFFD;
+	padding: min(5vw, 3em);
+	border: 2px solid gray;
+	border-radius: 0.5em;
+	min-width: min(100%, 25em);
+	max-width: 50em;
+	text-align: center;
+}
+
+#share-modal h2 {
+	font-size: 1.25rem;
+}
+
+#share-modal-close {
+	position: absolute;
+	top: 0.5em;
+	right: 0.5em;
+	padding: 0.5em 1em;
+}
+
+#share-modal-link {
+	overflow-wrap: anywhere;
+}
+
+#share-modal-copy-link {
+	width: max-content;
+}
+
+#share-modal-close span {
+	display: none;
+}
+
+#share-modal-close::after  {
+	content: 'X';
+}
+
 .inputlabel {
 	background: #cafaf6;
 	padding: 0.25em 1.5em;
 	border-radius: 1em;
-	margin-right: 1em;
 }
 
 .input {
@@ -90,7 +137,6 @@ body {
 	border: none;
 	margin-left: 1em;
 }
-
 
 .button {
 	padding: 0.5em 1.5em;
@@ -126,6 +172,20 @@ body {
 .flex-column {
 	display: flex;
 	flex-direction: column;
+}
+
+.flex-row {
+	display: flex;
+	flex-direction: row;
+}
+
+.flex-center {
+	justify-content: center;
+	align-items: center;
+}
+
+.flex-wrap {
+	flex-wrap: wrap;
 }
 
 .flex-grow {

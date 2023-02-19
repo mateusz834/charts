@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-	var chart = {
+	const chart = {
 		yearInput: document.getElementById("year"),
 		chartResetButton : document.getElementById("reset"),
 		chart: document.getElementById("chart"),
@@ -8,18 +8,59 @@ document.addEventListener("DOMContentLoaded", () => {
 		copyToClipboardButton: document.getElementById("copy-to-clipboard"),
 		gitReproducer: document.getElementById("chart-git-reproducer"),
 
+		shareModalOpenButton: document.getElementById("share-modal-open"),
+		shareModal: document.getElementById("share-modal"),
+		shareModalLink: document.getElementById("share-modal-link"),
+		shareModalCloseButton: document.getElementById("share-modal-close"),
+		shareModalCopyLinkButton: document.getElementById("share-modal-copy-link"),
+
 		start: function() {
+			let saved;
+
+			const url = new URL(document.location.href);
+			if (url.hash.startsWith("#s")) {
+				const encodedChart = url.hash.substring(2);
+				saved = this.decodeChart(encodedChart);
+			} else {
+				saved = this.getSavedChart();
+			}
+
 			let date = new Date();
-			let saved = this.getSavedChart();
-			if (saved != null && saved.length != 0) {
+			if (saved !== null && saved.length !== 0) {
 				date = new Date(saved[0]);
 			}
 
 			this.yearInput.value = date.getFullYear();
 			this.generateChart(date.getFullYear(), saved)
 
-			this.yearInput.addEventListener("input", () => this.generateChart(this.yearInput.value, null));
-			this.chartResetButton.addEventListener("click", () => this.generateChart(this.yearInput.value, null));
+			const parseInteager = (str) => {
+				let num = parseInt(str, 10);
+				if (!Number.isFinite(num)) {
+					num = 0;
+				}
+				return num
+			}
+
+			this.shareModalOpenButton.addEventListener("click", () => {
+				this.shareModal.classList.remove("hidden");
+			});
+
+			this.shareModalCloseButton.addEventListener("click", () => {
+				this.shareModal.classList.add("hidden");
+			});
+
+			this.shareModal.addEventListener("click", (e) => {
+				if (e.target === this.shareModal) {
+					this.shareModal.classList.add("hidden");
+				}
+			});
+
+			this.shareModalCopyLinkButton.addEventListener("click", () => {
+				navigator.clipboard.writeText(this.shareModalLink.href);
+			});
+
+			this.yearInput.addEventListener("input", () => this.generateChart(parseInteager(this.yearInput.value), null));
+			this.chartResetButton.addEventListener("click", () => this.generateChart(parseInteager(this.yearInput.value), null));
 			this.commitMsgInput.addEventListener("input", () => this.chartUpdate());
 			this.copyToClipboardButton.addEventListener("click", () => navigator.clipboard.writeText(cmd.innerText));
 
@@ -29,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				}
 			});
 			this.chart.addEventListener("mousedown", (e) => {
-				if (e.button != 0) {
+				if (e.button !== 0) {
 					return;
 				}
 				e.preventDefault();
@@ -37,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				this.downElement = e.target;
 			});
 			document.addEventListener("mouseup", (e) => {
-				if (e.button != 0) {
+				if (e.button !== 0) {
 					return;
 				}
 				this.down = false;
@@ -78,39 +119,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		getSavedChart: function() {
 			let stored = localStorage.getItem("clicked");
-			if (stored != null) {
+			if (stored !== null) {
 				return JSON.parse(stored);
 			}
 			return null;
 		},
 
 		generateChart: function(year, stored) {
-			if (this.yearInput.value.length < 4) {
+			if (year < 1000 || year > 0xffff) {
 				this.chart.classList.add("hidden");
 				this.gitReproducer.classList.add("hidden");
+				this.chartResetButton.setAttribute("disabled", "");
 				this.cmd.innerHTML = "";
 				this.chart.innerHTML = "";
 				return;
 			}
 
-			let date = new Date(year, 0, 0);
+			let date = new Date(year, 0, 0, 12);
 
 			let weeks = [];
 			let week = undefined;
 
 			while (true) {
-				date = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
-				if (date.getFullYear() != year) {
+				date = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 12);
+				if (date.getFullYear() !== year) {
 					break;
 				}
 
-				if (date.getDay() == 0 || week == undefined) {
+				if (date.getDay() === 0 || week === undefined) {
 					week = document.createElement("div");
 					week.classList.add("week");
 					weeks.push(week);
 				}
 
-				if (date.getMonth() == 0 && date.getDate() == 1) {
+				if (date.getMonth() === 0 && date.getDate() === 1) {
 					const day = date.getDay();
 					for (let i = 0; i < day; i++) {
 						const day = document.createElement("div");
@@ -128,6 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				week.appendChild(day);
 			}
 
+			this.chartResetButton.removeAttribute("disabled");
 			this.chart.replaceChildren(...weeks);
 			this.chart.classList.remove("hidden");
 			this.gitReproducer.classList.add("hidden");
@@ -152,8 +195,81 @@ document.addEventListener("DOMContentLoaded", () => {
 				this.gitReproducer.classList.remove("hidden");
 				localStorage.setItem("clicked", JSON.stringify(clicked));
 			}
+
+			this.shareModalLink.href = "#s" + this.encodeChart();
+			this.shareModalLink.innerText = this.shareModalLink.href;
+		},
+
+		encodeChart: function() {
+			const arr = new Uint8Array(2 + 53);
+			var lastNonZero = 0;
+			this.chart.querySelectorAll(".day").forEach((node, index) => {
+				const date = new Date(Date.parse(node.dataset.date));
+				if (index == 0) {
+					const year = date.getFullYear();
+					// Encode year as a 16b inteager in big-endian form.
+						arr[0] = (year >> 8) & 0xff
+					arr[1] = year & 0xff
+				}
+
+				const arrIndex = Math.floor(index / 8) + 2;
+
+				if (node.classList.contains("clicked")) {
+					if (arrIndex > lastNonZero) {
+						lastNonZero = arrIndex
+					}
+					const bitIndex = index % 8;
+					arr[arrIndex] |= 1 << bitIndex;
+				} else {
+					return
+				}
+
+			});
+			return "0" + btoa(arr.subarray(0, lastNonZero+1));
+		},
+
+		decodeChart: function(enc) {
+			if (enc[0] !== '0') {
+				throw new Error("invalid encoding");
+			}
+
+			const tmp = atob(enc.substring(1));
+			const arr = JSON.parse("[" + tmp + "]"); // heh
+
+			if (arr.length < 2) {
+				throw new Error("invalid encoding");
+			}
+
+			const year = (arr[0] << 8) | arr[1]
+
+			const clicked = [];
+			let lastZero = false;
+			arr.slice(2).forEach((v, i) => {
+				lastZero = false;
+				if (v == 0) {
+					lastZero = true;
+				}
+
+				for (let bit = 7; bit >= 0; bit--) {
+					if ((v & (1 << (7 - bit))) !== 0) {
+						const dayNum = 1 + i*8 + (7 - bit);
+						const date = new Date(year, 0, dayNum, 12);
+						if (date.getFullYear() !== year) {
+							throw new Error("invalid encoding");
+						}
+						clicked.push(date.getTime());
+					}
+				}
+			});
+
+			if (lastZero) {
+				throw new Error("invalid encoding");
+			}
+
+			return clicked;
 		}
 	}
+
 	chart.start();
 });
 
