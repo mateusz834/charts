@@ -22,8 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
 			let saved;
 
 			const url = new URL(document.location.href);
-			if (url.hash.startsWith("#s")) {
-				const encodedChart = url.hash.substring(2);
+			const encodedChart = url.searchParams.get("s");
+			if (encodedChart != null) {
 				saved = this.decodeChart(encodedChart);
 				this.preview = true;
 			} else {
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 				// remove hash from url, so that on next refresh we get the chart from localStorage.
 				const url = new URL(document.location.href);
-				url.hash = "";
+				url.searchParams.delete("s");
 				history.replaceState({}, null, url);
 
 				// to update the localStorage.
@@ -229,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				}
 			}
 
-			this.shareModalLink.href = "#s" + this.encodeChart();
+			this.shareModalLink.href = "/?s=" + this.encodeChart();
 			this.shareModalLink.innerText = this.shareModalLink.href;
 		},
 
@@ -241,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				if (index == 0) {
 					const year = date.getFullYear();
 					// Encode year as a 16b inteager in big-endian form.
-						arr[0] = (year >> 8) & 0xff
+					arr[0] = (year >> 8) & 0xff
 					arr[1] = year & 0xff
 				}
 
@@ -258,7 +258,8 @@ document.addEventListener("DOMContentLoaded", () => {
 				}
 
 			});
-			return "0" + btoa(arr.subarray(0, lastNonZero+1));
+
+			return "0" + urlSafeBase64Encode(arr.subarray(0, lastNonZero+1));
 		},
 
 		decodeChart: function(enc) {
@@ -266,8 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				throw new Error("invalid encoding");
 			}
 
-			const tmp = atob(enc.substring(1));
-			const arr = JSON.parse("[" + tmp + "]"); // heh
+			const arr = urlSafeBase64Decode(enc.substring(1));
 
 			if (arr.length < 2) {
 				throw new Error("invalid encoding");
@@ -306,4 +306,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	chart.start();
 });
 
+function urlSafeBase64Encode(arr) {
+	return btoa(arr).replace(/\//g, '_').replace(/\+/g, '-').replace(/={1,2}$/, '');
+}
+
+function urlSafeBase64Decode(arr) {
+    const tmp = arr + Array((4 - arr.length % 4) % 4 + 1).join('=');
+	tmp = tmp.replace(/={1,2}$/, '').replace(/_/g, '/').replace(/-/g, '+');
+	return JSON.parse("[" + atob(tmp) + "]"); // heh
+}
 
