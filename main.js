@@ -221,7 +221,12 @@ document.addEventListener("DOMContentLoaded", () => {
 				clicked[index] = Date.parse(node.dataset.date);
 			});
 
+			if (clicked.length === 0) {
+				this.shareModalOpenButton.setAttribute("disabled", "");
+			}
+
 			if (clicked.length !== 0) {
+				this.shareModalOpenButton.removeAttribute("disabled");
 				this.cmd.innerText = cmds;
 				this.gitReproducer.classList.remove("hidden");
 				if (!this.preview) {
