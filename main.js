@@ -206,7 +206,6 @@ document.addEventListener("DOMContentLoaded", () => {
 				this.chartResetButton.classList.add("hidden");
 				this.yearInput.setAttribute("disabled", "");;
 			}
-
 		},
 
 		chartUpdate: function() {
@@ -223,17 +222,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 			if (clicked.length === 0) {
 				this.shareModalOpenButton.setAttribute("disabled", "");
+				this.gitReproducer.classList.add("hidden");
 			}
 
 			if (clicked.length !== 0) {
 				this.shareModalOpenButton.removeAttribute("disabled");
-				this.cmd.innerText = cmds;
 				this.gitReproducer.classList.remove("hidden");
-				if (!this.preview) {
-					localStorage.setItem("clicked", JSON.stringify(clicked));
-				}
 			}
 
+			if (!this.preview) {
+				localStorage.setItem("clicked", JSON.stringify(clicked));
+			}
+			this.cmd.innerText = cmds;
 			this.shareModalLink.href = "/?s=" + this.encodeChart();
 			this.shareModalLink.innerText = this.shareModalLink.href;
 		},
@@ -246,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				if (index == 0) {
 					const year = date.getFullYear();
 					// Encode year as a 16b inteager in big-endian form.
-					arr[0] = (year >> 8) & 0xff
+						arr[0] = (year >> 8) & 0xff
 					arr[1] = year & 0xff
 				}
 
@@ -316,7 +316,7 @@ function urlSafeBase64Encode(arr) {
 }
 
 function urlSafeBase64Decode(arr) {
-    let tmp = arr + Array((4 - arr.length % 4) % 4 + 1).join('=');
+	let tmp = arr + Array((4 - arr.length % 4) % 4 + 1).join('=');
 	tmp = tmp.replace(/={1,2}$/, '').replace(/_/g, '/').replace(/-/g, '+');
 	return JSON.parse("[" + atob(tmp) + "]"); // heh
 }
