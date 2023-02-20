@@ -316,7 +316,7 @@ function urlSafeBase64Encode(arr) {
 }
 
 function urlSafeBase64Decode(arr) {
-    const tmp = arr + Array((4 - arr.length % 4) % 4 + 1).join('=');
+    let tmp = arr + Array((4 - arr.length % 4) % 4 + 1).join('=');
 	tmp = tmp.replace(/={1,2}$/, '').replace(/_/g, '/').replace(/-/g, '+');
 	return JSON.parse("[" + atob(tmp) + "]"); // heh
 }
