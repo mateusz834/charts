@@ -14,6 +14,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		shareModalCloseButton: document.getElementById("share-modal-close"),
 		shareModalCopyLinkButton: document.getElementById("share-modal-copy-link"),
 
+		editSharedButton: document.getElementById("edit-shared"),
+
+		preview: false,
+
 		start: function() {
 			let saved;
 
@@ -21,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			if (url.hash.startsWith("#s")) {
 				const encodedChart = url.hash.substring(2);
 				saved = this.decodeChart(encodedChart);
+				this.preview = true;
 			} else {
 				saved = this.getSavedChart();
 			}
@@ -63,6 +68,21 @@ document.addEventListener("DOMContentLoaded", () => {
 			this.chartResetButton.addEventListener("click", () => this.generateChart(parseInteager(this.yearInput.value), null));
 			this.commitMsgInput.addEventListener("input", () => this.chartUpdate());
 			this.copyToClipboardButton.addEventListener("click", () => navigator.clipboard.writeText(cmd.innerText));
+
+			this.editSharedButton.addEventListener("click", () => {
+				this.editSharedButton.classList.add("hidden");
+				this.chartResetButton.classList.remove("hidden");
+				this.yearInput.removeAttribute("disabled");;
+				this.preview = false;
+
+				// remove hash from url, so that on next refresh we get the chart from localStorage.
+				const url = new URL(document.location.href);
+				url.hash = "";
+				history.replaceState({}, null, url);
+
+				// to update the localStorage.
+				this.chartUpdate();
+			});
 
 			this.chart.addEventListener("click", (e) => {
 				if (e.target.classList.contains("day")) {
@@ -113,8 +133,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		},
 
 		click: function(element) {
-			element.classList.toggle("clicked");
-			this.chartUpdate();
+			if (!this.preview) {
+				element.classList.toggle("clicked");
+				this.chartUpdate();
+			}
 		},
 
 		getSavedChart: function() {
@@ -130,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				this.chart.classList.add("hidden");
 				this.gitReproducer.classList.add("hidden");
 				this.chartResetButton.setAttribute("disabled", "");
+				this.shareModalOpenButton.setAttribute("disabled", "");
 				this.cmd.innerHTML = "";
 				this.chart.innerHTML = "";
 				return;
@@ -171,11 +194,19 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 
 			this.chartResetButton.removeAttribute("disabled");
+			this.shareModalOpenButton.removeAttribute("disabled");
 			this.chart.replaceChildren(...weeks);
 			this.chart.classList.remove("hidden");
 			this.gitReproducer.classList.add("hidden");
 			this.cmd.innerHTML = "";
 			this.chartUpdate();
+
+			if (this.preview) {
+				this.editSharedButton.classList.remove("hidden");
+				this.chartResetButton.classList.add("hidden");
+				this.yearInput.setAttribute("disabled", "");;
+			}
+
 		},
 
 		chartUpdate: function() {
@@ -193,7 +224,9 @@ document.addEventListener("DOMContentLoaded", () => {
 			if (clicked.length !== 0) {
 				this.cmd.innerText = cmds;
 				this.gitReproducer.classList.remove("hidden");
-				localStorage.setItem("clicked", JSON.stringify(clicked));
+				if (!this.preview) {
+					localStorage.setItem("clicked", JSON.stringify(clicked));
+				}
 			}
 
 			this.shareModalLink.href = "#s" + this.encodeChart();
