@@ -1,0 +1,53 @@
+{{define "head"}}
+<script defer src="/assets/main.js"></script>
+{{end}}
+
+{{define "content"}}
+<section class="container flex-column gap-15">
+	<header>
+		<h1>Generate your unique github summary chart</h1>
+	</header>
+
+	<div class="flex-row flex-center flex-wrap gap-05">
+		<label class="inputlabel">
+			Year:
+			<input class="input" id="year" type="number" name="year">
+		</label>
+		<button id="edit-shared" class="button button-yellow hidden">Edit</button>
+		<button id="share-modal-open" class="button button-yellow" disabled>Share</button>
+		<button id="reset" class="button button-red" disabled>Reset</button>
+	</div>
+
+	<div>
+		<div id="chart"></div>
+	</div>
+
+	<div id="chart-git-reproducer" class="flex-grow flex-column gap-15 hidden">
+		<h2>Git cmd reproducer</h2>
+		<div class="flex-grow flex-column gap-05">
+			<div class="flex-row flex-center flex-wrap gap-05">
+				<label class="inputlabel">
+					Commit message:
+					<input id="commit-name" class="input" type="text" name="commit-name" autocomplete="off" value="charts">
+				</label>
+				<button id="copy-to-clipboard" class="button button-yellow">Copy to clipboard</button>
+			</div>
+			<div class="cmd-wrapper">
+				<code id="cmd"></code>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section id="share-modal" class="flex-column flex-center hidden">
+	<div class="flex-column flex-center gap-15">
+		<button id="share-modal-close" class="button button-yellow"><span>Close</span></button>
+
+		<h2>Share Chart</h2>
+		<button id="share-modal-copy-link" class="button button-yellow">Copy Link</button>
+		<div>
+			<a id="share-modal-link" href="#"></a>
+		</div>
+	</div>
+</section>
+{{end}}
