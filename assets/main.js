@@ -239,14 +239,14 @@ document.addEventListener("DOMContentLoaded", () => {
 		},
 
 		encodeChart: function() {
-			const arr = new Uint8Array(2 + 53);
+			const arr = new Uint8Array(2 + 46);
 			var lastNonZero = 0;
 			this.chart.querySelectorAll(".day").forEach((node, index) => {
 				const date = new Date(Date.parse(node.dataset.date));
 				if (index == 0) {
 					const year = date.getFullYear();
 					// Encode year as a 16b inteager in big-endian form.
-						arr[0] = (year >> 8) & 0xff
+					arr[0] = (year >> 8) & 0xff
 					arr[1] = year & 0xff
 				}
 
@@ -256,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
 					if (arrIndex > lastNonZero) {
 						lastNonZero = arrIndex
 					}
-					const bitIndex = index % 8;
+					const bitIndex = 7 - (index % 8);
 					arr[arrIndex] |= 1 << bitIndex;
 				} else {
 					return
@@ -289,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				}
 
 				for (let bit = 7; bit >= 0; bit--) {
-					if ((v & (1 << (7 - bit))) !== 0) {
+					if ((v & (1 << bit)) !== 0) {
 						const dayNum = 1 + i*8 + (7 - bit);
 						const date = new Date(year, 0, dayNum, 12);
 						if (date.getFullYear() !== year) {
@@ -312,12 +312,31 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function urlSafeBase64Encode(arr) {
-	return btoa(arr).replace(/\//g, '_').replace(/\+/g, '-').replace(/={1,2}$/, '');
+	return encode(arr).replace(/\//g, '_').replace(/\+/g, '-').replace(/={1,2}$/, '');
 }
 
 function urlSafeBase64Decode(arr) {
 	let tmp = arr + Array((4 - arr.length % 4) % 4 + 1).join('=');
 	tmp = tmp.replace(/={1,2}$/, '').replace(/_/g, '/').replace(/-/g, '+');
-	return JSON.parse("[" + atob(tmp) + "]"); // heh
+	return decode(tmp);
 }
 
+// https://github.com/WebReflection/uint8-to-base64/blob/master/index.js
+var fromCharCode = String.fromCharCode;
+var encode = function encode(uint8array) {
+	var output = [];
+
+	for (var i = 0, length = uint8array.length; i < length; i++) {
+		output.push(fromCharCode(uint8array[i]));
+	}
+
+	return btoa(output.join(''));
+};
+
+var asCharCode = function asCharCode(c) {
+	return c.charCodeAt(0);
+};
+
+var decode = function decode(chars) {
+	return Uint8Array.from(atob(chars), asCharCode);
+};
