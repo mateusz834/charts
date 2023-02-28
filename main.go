@@ -1,17 +1,14 @@
 package main
 
 import (
-	"embed"
 	"encoding/json"
 	"fmt"
 	"os"
 
+	"github.com/mateusz834/charts/app"
 	"github.com/mateusz834/charts/service"
 	"github.com/mateusz834/charts/storage"
 )
-
-//go:embed assets
-var assets embed.FS
 
 func main() {
 	if err := run(); err != nil {
@@ -34,13 +31,13 @@ func run() error {
 	sessionService := service.NewSessionService(&db)
 	sharesService := service.NewSharesService(&db)
 
-	a := NewApplication(oauth{
-		tokenURL:     "https://github.com/login/oauth/access_token",
-		clientID:     "14e6190e978637376f67",
-		clientSecret: c.ClientSecret,
+	a := app.NewApplication(app.OAuth{
+		TokenURL:     "https://github.com/login/oauth/access_token",
+		ClientID:     "14e6190e978637376f67",
+		ClientSecret: c.ClientSecret,
 	}, &sessionService, &sharesService)
 
-	return a.start()
+	return a.Start()
 }
 
 type Config struct {

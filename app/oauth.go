@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"encoding/json"
@@ -8,20 +8,20 @@ import (
 	"strings"
 )
 
-type oauth struct {
-	tokenURL     string
-	clientID     string
-	clientSecret string
+type OAuth struct {
+	TokenURL     string
+	ClientID     string
+	ClientSecret string
 }
 
-func (o *oauth) getAccessToken(authorizatonCode string) (string, error) {
+func (o *OAuth) getAccessToken(authorizatonCode string) (string, error) {
 	body := make(url.Values)
 	body.Add("grant_type", "authorization_code")
-	body.Add("client_id", o.clientID)
-	body.Add("client_secret", o.clientSecret)
+	body.Add("client_id", o.ClientID)
+	body.Add("client_secret", o.ClientSecret)
 	body.Add("code", authorizatonCode)
 
-	req, err := http.NewRequest(http.MethodPost, o.tokenURL, strings.NewReader(body.Encode()))
+	req, err := http.NewRequest(http.MethodPost, o.TokenURL, strings.NewReader(body.Encode()))
 	if err != nil {
 		return "", fmt.Errorf("failed while preparing access token request: %v", err)
 	}

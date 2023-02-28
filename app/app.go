@@ -1,7 +1,8 @@
-package main
+package app
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +15,9 @@ import (
 	"github.com/mateusz834/charts/service"
 	"github.com/mateusz834/charts/templates"
 )
+
+//go:embed assets
+var assets embed.FS
 
 // errHandler is an http.HandlerFunc, but with an aditional error return.
 // nil return means that the response was sent, any error means that
@@ -112,12 +116,12 @@ type PublicSharesService interface {
 }
 
 type application struct {
-	githubOAuth         oauth
+	githubOAuth         OAuth
 	sessionService      SessionService
 	publicSharesService PublicSharesService
 }
 
-func NewApplication(oauth oauth, session SessionService, publicShares PublicSharesService) *application {
+func NewApplication(oauth OAuth, session SessionService, publicShares PublicSharesService) *application {
 	return &application{
 		githubOAuth:         oauth,
 		sessionService:      session,
@@ -125,7 +129,7 @@ func NewApplication(oauth oauth, session SessionService, publicShares PublicShar
 	}
 }
 
-func (a *application) start() error {
+func (a *application) Start() error {
 	mux := http.NewServeMux()
 	a.setRoutes(mux)
 	return http.ListenAndServe("localhost:8888", mux)
