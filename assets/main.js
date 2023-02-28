@@ -16,6 +16,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		editSharedButton: document.getElementById("edit-shared"),
 
+		publicShareForm: document.getElementById("public-share-form"),
+		publicShareEnableCustomPath: document.getElementById("public-share-enable-custom-path"),
+		publicShareUrlWrapper: document.getElementById("public-share-url-wrapper"),
+		publicShareCustomPathInput: document.getElementById("public-share-custom-path"),
+		publicShareCustomPathStatus: document.getElementById("public-share-custom-path-status"),
+		publicShareURLResult: document.getElementById("public-share-url-result"),
+		publicShareGithubLogin: document.getElementById("github-login-anchor"),
+
 		preview: false,
 
 		start: function() {
@@ -46,7 +54,28 @@ document.addEventListener("DOMContentLoaded", () => {
 				return num
 			}
 
-			this.shareModalOpenButton.addEventListener("click", () => {
+			this.shareModalOpenButton.addEventListener("click", async () => {
+				const result = await fetch("/is-authenticated", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+				});
+				if (result.status === 200) {
+					const res = await result.json();
+					if (res.error === undefined) {
+						this.publicShareForm.classList.remove("hidden");
+						this.publicShareGithubLogin.classList.add("hidden");
+					} else {
+						this.publicShareForm.classList.add("hidden");
+						this.publicShareGithubLogin.classList.remove("hidden");
+					}
+				} else {
+						this.publicShareGithubLogin.classList.add("hidden");
+						this.publicShareForm.classList.add("hidden");
+				}
+
+				this.publicShareURLResult.classList.add("hidden");
+				this.publicShareCustomPathStatus.innerText = "";
+				this.publicShareCustomPathStatus.classList.add("hidden");
 				this.shareModal.classList.remove("hidden");
 			});
 
@@ -82,6 +111,70 @@ document.addEventListener("DOMContentLoaded", () => {
 
 				// to update the localStorage.
 				this.chartUpdate();
+			});
+
+			this.publicShareForm.addEventListener("submit", async (e) => {
+				e.preventDefault();
+				const path = this.publicShareEnableCustomPath.checked ? this.publicShareCustomPathInput.value : undefined;
+
+				const result = await fetch("/create-share", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						"custom_path": path,
+						chart: this.encodeChart(),
+					})
+				});
+				if (result.status == 200) {
+					const res = await result.json();
+					if (res.error === undefined) {
+						this.publicShareForm.classList.add("hidden");
+						this.publicShareURLResult.href = "/s/" + res.path;
+						this.publicShareURLResult.innerText = this.publicShareURLResult.href;
+						this.publicShareURLResult.classList.remove("hidden");
+					} else {
+						this.publicShareCustomPathStatus.innerText = "url not available: " + res.error;
+						this.publicShareCustomPathStatus.classList.add("lightred");
+						this.publicShareCustomPathStatus.classList.remove("lightgreen");
+						this.publicShareCustomPathStatus.classList.remove("hidden");
+					}
+				}
+			});
+
+			this.publicShareEnableCustomPath.addEventListener("click", () => {
+				if (this.publicShareEnableCustomPath.checked) {
+					this.publicShareUrlWrapper.classList.remove("hidden");
+				} else {
+					this.publicShareUrlWrapper.classList.add("hidden");
+				}
+			});
+
+			this.publicShareCustomPathInput.addEventListener("input", async () => {
+				const path = this.publicShareCustomPathInput.value;
+				const result = await fetch("/validate-path", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						path: path,
+					})
+				});
+				if (result.status === 200) {
+					const response = await result.json()
+					if (response.avail) {
+						this.publicShareCustomPathStatus.innerText = "url available";
+						this.publicShareCustomPathStatus.classList.remove("lightred");
+						this.publicShareCustomPathStatus.classList.add("lightgreen");
+					} else {
+						if (response.reason !== undefined) {
+							this.publicShareCustomPathStatus.innerText = "url not available: " + response.reason;
+						} else {
+							this.publicShareCustomPathStatus.innerText = "url not available";
+						}
+						this.publicShareCustomPathStatus.classList.add("lightred");
+						this.publicShareCustomPathStatus.classList.remove("lightgreen");
+					}
+					this.publicShareCustomPathStatus.classList.remove("hidden");
+				}
 			});
 
 			this.chart.addEventListener("click", (e) => {
@@ -246,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				if (index == 0) {
 					const year = date.getFullYear();
 					// Encode year as a 16b inteager in big-endian form.
-					arr[0] = (year >> 8) & 0xff
+						arr[0] = (year >> 8) & 0xff
 					arr[1] = year & 0xff
 				}
 

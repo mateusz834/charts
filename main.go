@@ -2,11 +2,12 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 
-	"github.com/mateusz834/charts/templates"
+	"github.com/mateusz834/charts/service"
+	"github.com/mateusz834/charts/storage"
 )
 
 //go:embed assets
@@ -20,17 +21,41 @@ func main() {
 }
 
 func run() error {
-	http.Handle("/assets/", http.FileServer(http.FS(assets)))
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
-		}
-		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		if err := templates.Index(w); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	})
-	return http.ListenAndServe("localhost:8888", nil)
+	c, err := LoadConfig("config.json")
+	if err != nil {
+		return err
+	}
+
+	db, err := storage.NewSqliteStorage("./db.db")
+	if err != nil {
+		return err
+	}
+
+	sessionService := service.NewSessionService(&db)
+	sharesService := service.NewSharesService(&db)
+
+	a := NewApplication(oauth{
+		tokenURL:     "https://github.com/login/oauth/access_token",
+		clientID:     "14e6190e978637376f67",
+		clientSecret: c.ClientSecret,
+	}, &sessionService, &sharesService)
+
+	return a.start()
+}
+
+type Config struct {
+	ClientSecret string
+}
+
+func LoadConfig(path string) (*Config, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &Config{}
+	if err := json.NewDecoder(f).Decode(c); err != nil {
+		return nil, err
+	}
+	return c, nil
 }

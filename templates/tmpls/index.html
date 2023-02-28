@@ -43,11 +43,40 @@
 	<div class="flex-column flex-center gap-15">
 		<button id="share-modal-close" class="button button-yellow"><span>Close</span></button>
 
-		<h2>Share Chart</h2>
-		<button id="share-modal-copy-link" class="button button-yellow">Copy Link</button>
-		<div>
-			<a id="share-modal-link" href="#"></a>
-		</div>
+		<h2>Share your Chart</h2>
+
+		<section class="flex-column gap-05 flex-center">
+			<h3>Private share</h3>
+			<button id="share-modal-copy-link" class="button button-yellow">Copy Link</button>
+			<div>
+				<a id="share-modal-link" href="#"></a>
+			</div>
+		</section>
+
+		<section class="flex-column gap-05 flex-center">
+			<h3>Public share</h3>
+			<a id="public-share-url-result" class="hidden"> </a>
+			<form id="public-share-form" class="flex-column gap-05 hidden">
+				<label>
+					Custom URL: <input id="public-share-enable-custom-path" autocomplete="off" type="checkbox">
+				</label>
+				<div id="public-share-url-wrapper" class="flex-column flex-center gap-05 hidden">
+					<label>
+						https://kdjfkd.com/s/ <input id="public-share-custom-path" type="text">
+					</label>
+					<div id="public-share-custom-path-status" class="hidden"></div>
+				</div>
+				<button type="submit" class="button button-yellow">Share</button>
+			</form>
+			<div id="github-login-anchor">
+			<p>Login With Github to share publicly.</p>
+			<a class="github-login" href="https://github.com/login/oauth/authorize?response_type=code&client_id=14e6190e978637376f67">
+				Login With Github
+			</a>
+			</div>
+		</section>
 	</div>
 </section>
+
+
 {{end}}

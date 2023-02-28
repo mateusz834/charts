@@ -126,6 +126,31 @@ body {
 	content: 'X';
 }
 
+.github-login {
+	display: inline-block;
+	margin-top: 0.5em;
+	color: black;
+	background: white;
+	padding: 0.5em 1em;
+	border: 1px solid black;
+	font-size: 1.2rem;
+	font-weight: 500;
+	text-decoration: none;
+	cursor: default;
+}
+
+.github-login:visited {
+	color: black;
+}
+
+.github-login:hover {
+	background: #e8e6e6;
+}
+
+.github-login:active {
+	background: #cccaca;
+}
+
 .inputlabel {
 	background: #cafaf6;
 	padding: 0.25em 1.5em;
@@ -202,4 +227,12 @@ body {
 
 .hidden {
 	display: none !important;
+}
+
+.lightgreen {
+	color: lightgreen;
+}
+
+.lightred {
+	color: #fa3737;
 }
