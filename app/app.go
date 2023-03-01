@@ -304,6 +304,10 @@ func (a *application) shareVisit(w http.ResponseWriter, r *http.Request) error {
 	sharePath := strings.TrimPrefix(r.URL.Path, "/s/")
 	share, err := a.publicSharesService.GetShare(sharePath)
 	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			http.Redirect(w, r, "/", http.StatusFound)
+			return nil
+		}
 		return err
 	}
 	http.Redirect(w, r, "/?s="+share.EncodedChart, http.StatusFound)

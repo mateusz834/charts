@@ -8,6 +8,8 @@ import (
 	"github.com/mattn/go-sqlite3"
 )
 
+var ErrNotFound = errors.New("not found requested data")
+
 const createTables = `
 CREATE TABLE IF NOT EXISTS sessions (
 	github_user_id INTEGER NOT NULL,
@@ -92,15 +94,15 @@ func (d *SqliteStorage) CreateShare(share *Share) (bool, error) {
 }
 
 func (d *SqliteStorage) GetShare(path string) (*Share, error) {
-	// TODO: handle non-exisitng paths somehow.
 	// TOOD: handle res.Err()
 	res, err := d.sql.Query("SELECT github_user_id, chart FROM shares WHERE path = ?", path)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Close()
+
 	if !res.Next() {
-		return nil, fmt.Errorf("no entry in database for requested path")
+		return nil, ErrNotFound
 	}
 
 	ret := &Share{Path: path}

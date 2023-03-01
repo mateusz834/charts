@@ -9,6 +9,8 @@ import (
 	"github.com/mateusz834/charts/storage"
 )
 
+var ErrNotFound = storage.ErrNotFound
+
 type SharesStorage interface {
 	IsPathAvail(path string) (bool, error)
 	CreateShare(share *storage.Share) (bool, error)
