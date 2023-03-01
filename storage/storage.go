@@ -94,20 +94,15 @@ func (d *SqliteStorage) CreateShare(share *Share) (bool, error) {
 }
 
 func (d *SqliteStorage) GetShare(path string) (*Share, error) {
-	// TOOD: handle res.Err()
-	res, err := d.sql.Query("SELECT github_user_id, chart FROM shares WHERE path = ?", path)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Close()
-
-	if !res.Next() {
-		return nil, ErrNotFound
-	}
+	row := d.sql.QueryRow("SELECT github_user_id, chart FROM shares WHERE path = ?", path)
 
 	ret := &Share{Path: path}
-	if err := res.Scan(&ret.GithubUserID, &ret.Chart); err != nil {
+	if err := row.Scan(&ret.GithubUserID, &ret.Chart); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
+
 	return ret, nil
 }
