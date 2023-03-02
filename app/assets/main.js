@@ -55,13 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 
 			this.shareModalOpenButton.addEventListener("click", async () => {
-				const result = await fetch("/is-authenticated", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-				});
+				const result = await fetch("/is-authenticated", { method: "POST" });
 				if (result.status === 200) {
 					const res = await result.json();
-					if (res.error === undefined) {
+					if (res.authenticated) {
 						this.publicShareForm.classList.remove("hidden");
 						this.publicShareGithubLogin.classList.add("hidden");
 					} else {
@@ -69,8 +66,8 @@ document.addEventListener("DOMContentLoaded", () => {
 						this.publicShareGithubLogin.classList.remove("hidden");
 					}
 				} else {
-						this.publicShareGithubLogin.classList.add("hidden");
-						this.publicShareForm.classList.add("hidden");
+					this.publicShareGithubLogin.classList.add("hidden");
+					this.publicShareForm.classList.add("hidden");
 				}
 
 				this.publicShareURLResult.classList.add("hidden");
@@ -127,16 +124,23 @@ document.addEventListener("DOMContentLoaded", () => {
 				});
 				if (result.status == 200) {
 					const res = await result.json();
-					if (res.error === undefined) {
+
+					if (res["error_type"] === undefined) {
 						this.publicShareForm.classList.add("hidden");
 						this.publicShareURLResult.href = "/s/" + res.path;
 						this.publicShareURLResult.innerText = this.publicShareURLResult.href;
 						this.publicShareURLResult.classList.remove("hidden");
 					} else {
-						this.publicShareCustomPathStatus.innerText = "url not available: " + res.error;
-						this.publicShareCustomPathStatus.classList.add("lightred");
-						this.publicShareCustomPathStatus.classList.remove("lightgreen");
-						this.publicShareCustomPathStatus.classList.remove("hidden");
+						if (res["error_type"] === "path") {
+							this.publicShareCustomPathStatus.innerText = res["error_msg"];
+							this.publicShareCustomPathStatus.classList.add("lightred");
+							this.publicShareCustomPathStatus.classList.remove("lightgreen");
+							this.publicShareCustomPathStatus.classList.remove("hidden");
+						} else if (res["error_type"] === "auth") {
+							// show github login button.
+							this.publicShareForm.classList.add("hidden");
+							this.publicShareGithubLogin.classList.remove("hidden");
+						}
 					}
 				}
 			});
@@ -165,11 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
 						this.publicShareCustomPathStatus.classList.remove("lightred");
 						this.publicShareCustomPathStatus.classList.add("lightgreen");
 					} else {
-						if (response.reason !== undefined) {
-							this.publicShareCustomPathStatus.innerText = "url not available: " + response.reason;
-						} else {
-							this.publicShareCustomPathStatus.innerText = "url not available";
-						}
+						this.publicShareCustomPathStatus.innerText = response.cause;
 						this.publicShareCustomPathStatus.classList.add("lightred");
 						this.publicShareCustomPathStatus.classList.remove("lightgreen");
 					}

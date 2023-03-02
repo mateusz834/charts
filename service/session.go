@@ -12,7 +12,7 @@ import (
 
 type SessionStorage interface {
 	StoreSession(s *storage.Session) error
-	IsSessionValid(s *storage.Session) (bool, error)
+	IsSessionValid(s *storage.Session) error
 }
 
 type SessionService struct {
@@ -41,16 +41,18 @@ func (s *SessionService) NewSession(githubUserID uint64) (string, error) {
 	return encodeSession(&ses), nil
 }
 
-func (s *SessionService) IsSessionValid(session string) (uint64, bool, error) {
+func (s *SessionService) IsSessionValid(session string) (uint64, error) {
 	ses, err := decodeSession(session)
 	if err != nil {
-		return 0, false, err
+		return 0, err
 	}
-	avail, err := s.storage.IsSessionValid(ses)
-	if err != nil {
-		return 0, false, err
+	if err := s.storage.IsSessionValid(ses); err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return 0, PublicWrapperError{errors.New("session not found")}
+		}
+		return 0, err
 	}
-	return ses.GithubUserID, avail, nil
+	return ses.GithubUserID, nil
 }
 
 func encodeSession(s *storage.Session) string {
@@ -63,16 +65,16 @@ func encodeSession(s *storage.Session) string {
 func decodeSession(s string) (*storage.Session, error) {
 	bin := make([]byte, 8+32)
 	if base64.RawURLEncoding.DecodedLen(len(s)) > len(bin) {
-		return nil, errors.New("too long session value")
+		return nil, PublicWrapperError{errors.New("too long session value")}
 	}
 
 	n, err := base64.RawURLEncoding.Decode(bin, []byte(s))
 	if err != nil {
-		return nil, fmt.Errorf("failed while decoding base64-encoded session: %v", err)
+		return nil, PublicWithDebugError{Public: "failed to decode base64-encoded session", Debug: err}
 	}
 
 	if n != len(bin) {
-		return nil, errors.New("base64 decoded session has invalid length")
+		return nil, PublicWrapperError{errors.New("base64 decoded session has invalid length")}
 	}
 
 	return &storage.Session{

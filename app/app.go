@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"embed"
 	"encoding/json"
 	"errors"
@@ -25,7 +24,6 @@ var assets embed.FS
 type errHandler func(w http.ResponseWriter, r *http.Request) error
 
 type httpError struct {
-	JSONBody     any
 	ResponseCode int
 	DebugErr     error
 }
@@ -46,6 +44,12 @@ type afterWriteHeaderError struct {
 
 func (e *afterWriteHeaderError) Error() string { return e.Err.Error() }
 
+type debugError struct {
+	Err error
+}
+
+func (e *debugError) Error() string { return e.Err.Error() }
+
 // Handler returns an handler that converts errHandler to a normal http handler,
 // any error that happens in h is logged and an InternalServerError is send (without body).
 // Response code an the body can be controlled with *httpError.
@@ -54,15 +58,7 @@ func (h errHandler) Handler() http.HandlerFunc {
 		if err := h(w, r); err != nil {
 			switch v := err.(type) {
 			case *httpError:
-				if v.JSONBody != nil {
-					w.Header().Set("Content-Type", "application/json")
-				}
 				w.WriteHeader(v.ResponseCode)
-				if v.JSONBody != nil {
-					if err := json.NewEncoder(w).Encode(v.JSONBody); err != nil {
-						log.Printf("error while encoding error json body: %v", err)
-					}
-				}
 				log.Printf("debug error: %v", v.DebugErr)
 			case *afterWriteHeaderError:
 				// TODO: better logging, and use ConnectionError to pioritize the logging mechanism,
@@ -72,6 +68,8 @@ func (h errHandler) Handler() http.HandlerFunc {
 				} else {
 					log.Printf("error: %v", err)
 				}
+			case *debugError:
+				log.Printf("debug error: %v", err)
 			default:
 				w.WriteHeader(http.StatusInternalServerError)
 				log.Printf("error: %v", err)
@@ -106,7 +104,7 @@ func sendJSON(w http.ResponseWriter, status int, content any) error {
 
 type SessionService interface {
 	NewSession(githubUserID uint64) (string, error)
-	IsSessionValid(session string) (uint64, bool, error)
+	IsSessionValid(session string) (uint64, error)
 }
 
 type PublicSharesService interface {
@@ -142,12 +140,30 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	mux.Handle("/s/", errHandler(a.shareVisit).Handler())
 
 	mux.Handle("/github-login-callback", errHandler(a.githubLoginCallback).Handler())
+
+	// Accepts a JSON in one of following forms:
+	// 1) { "chart": "base64-encoded-chart" }, it will create a share with a server-generated path.
+	// 2) { "chart": "base64-encoded-chart", custom_path: "path" }, it will create a share with
+	// specified custom_path (if available).
+	// Returns (200 OK) with JSON:
+	// (on success) { "path": "custom_path or server-generated one" }
+	// (on error) { "error_type": "error_type", error_msg: "error msg" }
+	// error_type is one of following:
+	// - "path" -> something is wrong with the custom_path (not available, not allowewd chars)
+	// - "auth" -> authentication error (probaly expired), should ask the user to login again.
+	// - "chart" -> error related to the provided chart encoding.
+	mux.Handle("/create-share", errHandler(a.createShare).Handler())
+
+	// Accepts a JSON: { "path": "custom_path" }, checks whether this
+	// path is valid and whether it is avaliable for creation of a new share.
+	// Returns (200 OK) with one of following:
+	// 1) { "avail": true }
+	// 2) { "avail": false, "cause": "cause message" }
 	mux.Handle("/validate-path", errHandler(a.validatePath).Handler())
 
-	mux.Handle("/create-share", a.authMiddleware(a.createShare).Handler())
-	mux.Handle("/is-authenticated", a.authMiddleware(func(w http.ResponseWriter, _ *http.Request) error {
-		return sendJSON(w, http.StatusOK, struct{}{})
-	}).Handler())
+	// Returns (200 OK) { "authenticated": false } or { "authenticated": true }, depending on whether the request
+	// contains a valid session cookie.
+	mux.Handle("/is-authenticated", errHandler(a.isAuthenticated).Handler())
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
@@ -155,40 +171,10 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 			return
 		}
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		// TODO: same thing here as with sendJSON for error handling.
 		templates.Index(w)
 	})
-}
-
-type githubUserIDKey uint8
-
-func (a *application) authMiddleware(handler errHandler) errHandler {
-	type errResponse struct {
-		Error string `json:"error"`
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) error {
-		cookie, err := r.Cookie("__Host-session")
-		if err != nil {
-			return sendJSON(w, http.StatusOK, errResponse{Error: "missing valid session cookie"})
-		}
-
-		githubUserID, v, err := a.sessionService.IsSessionValid(cookie.Value)
-		if err != nil {
-			// TODO: here we cause internalServerError, we shouldn't return it always.
-			// e.g. invalid session cookie should not cause it.
-			return err
-		}
-
-		if !v {
-			return sendJSON(w, http.StatusOK, errResponse{Error: "invalid session cookie"})
-		}
-
-		return handler(w, r.WithContext(context.WithValue(context.Background(), githubUserIDKey(0), githubUserID)))
-	}
-}
-
-func githubUserID(r *http.Request) uint64 {
-	return r.Context().Value(githubUserIDKey(0)).(uint64)
 }
 
 func (a *application) githubLoginCallback(w http.ResponseWriter, r *http.Request) error {
@@ -241,24 +227,32 @@ func (a *application) validatePath(w http.ResponseWriter, r *http.Request) error
 	}{}
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		return &httpError{ResponseCode: http.StatusBadGateway, DebugErr: err}
+		return &httpError{ResponseCode: http.StatusBadRequest, DebugErr: err}
 	}
 
 	type response struct {
-		Avail  bool   `json:"avail"`
-		Reason string `json:"reason,omitempty"`
+		Avail bool   `json:"avail"`
+		Cause string `json:"cause,omitempty"`
 	}
 
 	avail, err := a.publicSharesService.IsPathAvail(reqBody.Path)
 	if err != nil {
 		var publicErr service.PublicError
 		if errors.As(err, &publicErr) {
-			return sendJSON(w, http.StatusOK, response{Avail: false, Reason: err.Error()})
+			return sendJSON(w, http.StatusOK, response{Avail: false, Cause: publicErr.PublicError()})
 		}
 		return err
 	}
 
-	return sendJSON(w, http.StatusOK, response{Avail: avail})
+	res := response{
+		Avail: avail,
+	}
+
+	if !res.Avail {
+		res.Cause = "url not available"
+	}
+
+	return sendJSON(w, http.StatusOK, res)
 }
 
 func (a *application) createShare(w http.ResponseWriter, r *http.Request) error {
@@ -268,12 +262,32 @@ func (a *application) createShare(w http.ResponseWriter, r *http.Request) error 
 	}{}
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		return &httpError{ResponseCode: http.StatusBadGateway, DebugErr: err}
+		return &httpError{ResponseCode: http.StatusBadRequest, DebugErr: err}
+	}
+
+	type errResponse struct {
+		ErrorType string `json:"error_type"`
+		ErrorMsg  string `json:"error_msg"`
+	}
+
+	githubUserID, err := a.authenticate(r)
+	if err != nil {
+		var publicError service.PublicError
+		if errors.As(err, &publicError) {
+			if err := sendJSON(w, http.StatusOK, errResponse{
+				ErrorType: "auth",
+				ErrorMsg:  publicError.PublicError(),
+			}); err != nil {
+				return err
+			}
+			return &debugError{err}
+		}
+		return err
 	}
 
 	createShare := &service.CreateShare{
 		EncodedChart: reqBody.Chart,
-		GithubUserID: githubUserID(r),
+		GithubUserID: githubUserID,
 	}
 
 	if reqBody.CustomPath != nil {
@@ -283,12 +297,12 @@ func (a *application) createShare(w http.ResponseWriter, r *http.Request) error 
 
 	path, err := a.publicSharesService.CreateShare(createShare)
 	if err != nil {
-		var publicErr service.PublicError
-		if errors.As(err, &publicErr) || err == service.ErrPathUnavail {
-			type errResponse struct {
-				Error string `json:"error"`
-			}
-			return sendJSON(w, http.StatusOK, errResponse{Error: err.Error()})
+		var createShareError *service.CreateShareError
+		if errors.As(err, &createShareError) {
+			return sendJSON(w, http.StatusOK, errResponse{
+				ErrorType: createShareError.Type,
+				ErrorMsg:  createShareError.Error(),
+			})
 		}
 		return err
 	}
@@ -296,7 +310,6 @@ func (a *application) createShare(w http.ResponseWriter, r *http.Request) error 
 	type response struct {
 		Path string `json:"path"`
 	}
-
 	return sendJSON(w, http.StatusOK, response{Path: path})
 }
 

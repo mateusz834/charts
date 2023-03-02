@@ -9,8 +9,6 @@ import (
 	"github.com/mateusz834/charts/storage"
 )
 
-var ErrNotFound = storage.ErrNotFound
-
 type SharesStorage interface {
 	IsPathAvail(path string) (bool, error)
 	CreateShare(share *storage.Share) (bool, error)
@@ -33,16 +31,16 @@ var errPathTooLong = errors.New("url must be at most 48 characters long")
 
 func (s *SharesService) isPathValid(path string) error {
 	if len(path) < 4 {
-		return PublicError{errPathTooShort}
+		return PublicWrapperError{errPathTooShort}
 	}
 
 	if len(path) > 48 {
-		return PublicError{errPathTooLong}
+		return PublicWrapperError{errPathTooLong}
 	}
 
 	for _, v := range path {
 		if !(v >= 'a' && v <= 'z' || v >= 'A' && v <= 'Z' || v >= '0' && v <= '9' || v == '-') {
-			return PublicError{errInvalidPath}
+			return PublicWrapperError{errInvalidPath}
 		}
 	}
 
@@ -66,11 +64,18 @@ type CreateShare struct {
 
 var ErrPathUnavail = errors.New("path is not available")
 
+type CreateShareError struct {
+	Type string
+	Err  error
+}
+
+func (c *CreateShareError) Error() string { return c.Err.Error() }
+
 func (s *SharesService) CreateShare(req *CreateShare) (string, error) {
 	var path string
 	if req.CustomPath {
 		if err := s.isPathValid(req.Path); err != nil {
-			return "", err
+			return "", &CreateShareError{"path", err}
 		}
 		path = req.Path
 	} else {
@@ -83,7 +88,7 @@ func (s *SharesService) CreateShare(req *CreateShare) (string, error) {
 
 	chart, err := chart.Decode(req.EncodedChart)
 	if err != nil {
-		return "", err
+		return "", &CreateShareError{"chart", err}
 	}
 
 	avail, err := s.storage.CreateShare(&storage.Share{
@@ -97,7 +102,7 @@ func (s *SharesService) CreateShare(req *CreateShare) (string, error) {
 	}
 
 	if !avail {
-		return "", ErrPathUnavail
+		return "", &CreateShareError{"path", ErrPathUnavail}
 	}
 
 	return path, nil

@@ -56,14 +56,16 @@ func (d *SqliteStorage) StoreSession(s *Session) error {
 	return err
 }
 
-func (d *SqliteStorage) IsSessionValid(s *Session) (bool, error) {
-	//TODO: handle time validity of session.
+func (d *SqliteStorage) IsSessionValid(s *Session) error {
 	res, err := d.sql.Query("SELECT * FROM sessions WHERE github_user_id = ? AND session_id = ?", s.GithubUserID, s.SessionID[:])
 	if err != nil {
-		return false, err
+		return err
 	}
 	defer res.Close()
-	return res.Next(), nil
+	if !res.Next() {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (d *SqliteStorage) IsPathAvail(path string) (bool, error) {
