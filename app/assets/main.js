@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		publicShareCustomPathStatus: document.getElementById("public-share-custom-path-status"),
 		publicShareURLResult: document.getElementById("public-share-url-result"),
 		publicShareGithubLogin: document.getElementById("github-login-anchor"),
+		publicShareLoggedAS: document.getElementById("public-share-logged-as"),
 
 		preview: false,
 
@@ -55,12 +56,24 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 
 			this.shareModalOpenButton.addEventListener("click", async () => {
-				const result = await fetch("/is-authenticated", { method: "POST" });
+				const result = await fetch("/user-info", { method: "POST" });
 				if (result.status === 200) {
 					const res = await result.json();
-					if (res.authenticated) {
+					if (res["github_user_id"] !== undefined) {
+						this.publicShareLoggedAS.classList.add("hidden");
 						this.publicShareForm.classList.remove("hidden");
 						this.publicShareGithubLogin.classList.add("hidden");
+						setTimeout(async () => {
+							const result = await fetch("https://api.github.com/user/" + res["github_user_id"]);
+							if (result.status === 200) {
+								const githubRes = await result.json();
+								const githubProfileAnchor = document.createElement("a");
+								githubProfileAnchor.href = githubRes["html_url"];
+								githubProfileAnchor.innerText = githubRes["login"];
+								this.publicShareLoggedAS.replaceChildren("Share as: ", githubProfileAnchor);
+								this.publicShareLoggedAS.classList.remove("hidden");
+							}
+						}, 0);
 					} else {
 						this.publicShareForm.classList.add("hidden");
 						this.publicShareGithubLogin.classList.remove("hidden");

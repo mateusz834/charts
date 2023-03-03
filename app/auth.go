@@ -11,21 +11,6 @@ import (
 	"github.com/mateusz834/charts/service"
 )
 
-func (a *application) isAuthenticated(w http.ResponseWriter, r *http.Request) error {
-	type response struct {
-		Auth bool `json:"authenticated"`
-	}
-
-	_, err := a.authenticate(r)
-	if err != nil {
-		if errors.As(err, new(service.PublicError)) {
-			return sendJSON(w, http.StatusOK, response{Auth: false})
-		}
-		return err
-	}
-	return sendJSON(w, http.StatusOK, response{Auth: true})
-}
-
 func (a *application) authenticate(r *http.Request) (uint64, error) {
 	cookie, err := r.Cookie("__Host-session")
 	if err != nil {
@@ -145,4 +130,31 @@ func (a *application) githubLoginCallback(w http.ResponseWriter, r *http.Request
 	})
 	http.Redirect(w, r, "/", http.StatusFound)
 	return nil
+}
+
+func (a *application) userInfo(w http.ResponseWriter, r *http.Request) error {
+	githubUserID, err := a.authenticate(r)
+	if err != nil {
+		var publicError service.PublicError
+		if errors.As(err, &publicError) {
+			type errResponse struct {
+				ErrorType string `json:"error_type"`
+				ErrorMsg  string `json:"error_msg"`
+			}
+			if err := sendJSON(w, http.StatusOK, errResponse{
+				ErrorType: "auth",
+				ErrorMsg:  publicError.PublicError(),
+			}); err != nil {
+				return err
+			}
+			return &debugError{err}
+		}
+		return err
+	}
+
+	type response struct {
+		GithubUserID uint64 `json:"github_user_id"`
+	}
+
+	return sendJSON(w, http.StatusOK, response{GithubUserID: githubUserID})
 }

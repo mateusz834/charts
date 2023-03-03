@@ -190,9 +190,12 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 		).Handler(),
 	)
 
-	// Returns (200 OK) { "authenticated": false } or { "authenticated": true }, depending on whether the request
-	// contains a valid session cookie.
-	mux.Handle("/is-authenticated", httpMethod(http.MethodPost, a.isAuthenticated).Handler())
+	// Returns (200 OK) with JSON:
+	// (on sucess) { "github_user_id": 1000 }
+	// (on error) { "error_type": "error_type", error_msg: "error msg" }
+	// error_type is one of following:
+	// - "auth" -> authentication error (probaly expired), so user is not authenticated.
+	mux.Handle("/user-info", httpMethod(http.MethodPost, a.userInfo).Handler())
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
