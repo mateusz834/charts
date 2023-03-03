@@ -1,7 +1,9 @@
 package app
 
 import (
+	"crypto/rand"
 	"embed"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +11,7 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -160,6 +163,7 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
 	mux.Handle("/s/", errHandler(httpMethod(http.MethodGet, a.shareVisit)).Handler())
 
+	mux.Handle("/github-login", httpMethod(http.MethodGet, a.githubLogin).Handler())
 	mux.Handle("/github-login-callback", httpMethod(http.MethodGet, a.githubLoginCallback).Handler())
 
 	// Accepts a JSON in one of following forms:
@@ -208,6 +212,39 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	})
 }
 
+func (a *application) githubLogin(w http.ResponseWriter, r *http.Request) error {
+	csrfBin := make([]byte, 32)
+	if _, err := rand.Read(csrfBin); err != nil {
+		return err
+	}
+
+	csrf := base64.RawURLEncoding.EncodeToString(csrfBin)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "__Host-oauth-state",
+		Value:    csrf,
+		Path:     "/",
+		MaxAge:   3600,
+		Expires:  time.Now().Add(time.Hour),
+		SameSite: http.SameSiteLaxMode,
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	authUrl, err := url.Parse("https://github.com/login/oauth/authorize")
+	if err != nil {
+		return err
+	}
+	query := url.Values{}
+	query.Add("response_type", "code")
+	query.Add("client_id", "14e6190e978637376f67")
+	query.Add("state", csrf)
+	authUrl.RawQuery = query.Encode()
+
+	http.Redirect(w, r, authUrl.String(), http.StatusFound)
+	return nil
+}
+
 func (a *application) githubLoginCallback(w http.ResponseWriter, r *http.Request) error {
 	query := r.URL.Query()
 	if _, ok := query["error"]; ok {
@@ -219,7 +256,30 @@ func (a *application) githubLoginCallback(w http.ResponseWriter, r *http.Request
 	if len(code) == 0 {
 		return &httpError{
 			DebugErr:     errors.New("missing code query param"),
-			ResponseCode: http.StatusBadGateway,
+			ResponseCode: http.StatusBadRequest,
+		}
+	}
+
+	state := query.Get("state")
+	if len(code) == 0 {
+		return &httpError{
+			DebugErr:     errors.New("missing state query param"),
+			ResponseCode: http.StatusBadRequest,
+		}
+	}
+
+	stateCookie, err := r.Cookie("__Host-oauth-state")
+	if err != nil {
+		return &httpError{
+			DebugErr:     errors.New("missing __Host-oauth-state cookie"),
+			ResponseCode: http.StatusBadRequest,
+		}
+	}
+
+	if state != stateCookie.Value {
+		return &httpError{
+			DebugErr:     errors.New("login csrf, bad state url query param"),
+			ResponseCode: http.StatusBadRequest,
 		}
 	}
 
@@ -238,6 +298,13 @@ func (a *application) githubLoginCallback(w http.ResponseWriter, r *http.Request
 		return err
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:    "__Host-oauth-state",
+		Path:    "/",
+		Expires: time.UnixMicro(0),
+		MaxAge:  -1,
+		Secure:  true,
+	})
 	http.SetCookie(w, &http.Cookie{
 		Name:     "__Host-session",
 		Value:    s,
