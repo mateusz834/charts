@@ -133,13 +133,22 @@ func (a *application) Start() error {
 	return http.ListenAndServe("localhost:8888", mux)
 }
 
+func httpMethod(method string, handler errHandler) errHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		if r.Method != method {
+			w.Header().Add("Allow", method)
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return nil
+		}
+		return handler(w, r)
+	}
+}
+
 func (a *application) setRoutes(mux *http.ServeMux) {
-	// TODO: require specific HTTP methods (in middlewares).
-
 	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
-	mux.Handle("/s/", errHandler(a.shareVisit).Handler())
+	mux.Handle("/s/", errHandler(httpMethod(http.MethodGet, a.shareVisit)).Handler())
 
-	mux.Handle("/github-login-callback", errHandler(a.githubLoginCallback).Handler())
+	mux.Handle("/github-login-callback", httpMethod(http.MethodGet, a.githubLoginCallback).Handler())
 
 	// Accepts a JSON in one of following forms:
 	// 1) { "chart": "base64-encoded-chart" }, it will create a share with a server-generated path.
@@ -152,18 +161,18 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	// - "path" -> something is wrong with the custom_path (not available, not allowewd chars)
 	// - "auth" -> authentication error (probaly expired), should ask the user to login again.
 	// - "chart" -> error related to the provided chart encoding.
-	mux.Handle("/create-share", errHandler(a.createShare).Handler())
+	mux.Handle("/create-share", httpMethod(http.MethodPost, a.createShare).Handler())
 
 	// Accepts a JSON: { "path": "custom_path" }, checks whether this
 	// path is valid and whether it is avaliable for creation of a new share.
 	// Returns (200 OK) with one of following:
 	// 1) { "avail": true }
 	// 2) { "avail": false, "cause": "cause message" }
-	mux.Handle("/validate-path", errHandler(a.validatePath).Handler())
+	mux.Handle("/validate-path", httpMethod(http.MethodPost, a.validatePath).Handler())
 
 	// Returns (200 OK) { "authenticated": false } or { "authenticated": true }, depending on whether the request
 	// contains a valid session cookie.
-	mux.Handle("/is-authenticated", errHandler(a.isAuthenticated).Handler())
+	mux.Handle("/is-authenticated", httpMethod(http.MethodPost, a.isAuthenticated).Handler())
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
