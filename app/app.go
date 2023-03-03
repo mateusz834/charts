@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"strings"
 	"time"
@@ -144,6 +145,17 @@ func httpMethod(method string, handler errHandler) errHandler {
 	}
 }
 
+func requireJSONContentType(handler errHandler) errHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		mimetype, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+		if err != nil || mimetype != "application/json" {
+			w.WriteHeader(http.StatusBadRequest)
+			return nil
+		}
+		return handler(w, r)
+	}
+}
+
 func (a *application) setRoutes(mux *http.ServeMux) {
 	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
 	mux.Handle("/s/", errHandler(httpMethod(http.MethodGet, a.shareVisit)).Handler())
@@ -161,14 +173,24 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	// - "path" -> something is wrong with the custom_path (not available, not allowewd chars)
 	// - "auth" -> authentication error (probaly expired), should ask the user to login again.
 	// - "chart" -> error related to the provided chart encoding.
-	mux.Handle("/create-share", httpMethod(http.MethodPost, a.createShare).Handler())
+	mux.Handle("/create-share",
+		httpMethod(
+			http.MethodPost,
+			requireJSONContentType(a.createShare),
+		).Handler(),
+	)
 
 	// Accepts a JSON: { "path": "custom_path" }, checks whether this
 	// path is valid and whether it is avaliable for creation of a new share.
 	// Returns (200 OK) with one of following:
 	// 1) { "avail": true }
 	// 2) { "avail": false, "cause": "cause message" }
-	mux.Handle("/validate-path", httpMethod(http.MethodPost, a.validatePath).Handler())
+	mux.Handle("/validate-path",
+		httpMethod(
+			http.MethodPost,
+			requireJSONContentType(a.validatePath),
+		).Handler(),
+	)
 
 	// Returns (200 OK) { "authenticated": false } or { "authenticated": true }, depending on whether the request
 	// contains a valid session cookie.
