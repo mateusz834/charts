@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
 	const chart = {
 		loggedAS: document.getElementById("logged-as"),
+		githubProfileAnchor: document.getElementById("github-profile-anchor"),
+		githubProfileAvatar: document.getElementById("github-profile-avatar"),
 		loginWithGithub: document.getElementById("login-with-github"),
 
 		yearInput: document.getElementById("year"),
@@ -212,18 +214,11 @@ document.addEventListener("DOMContentLoaded", () => {
 					const result = await fetch("https://api.github.com/user/" + res["github_user_id"]);
 					if (result.status === 200) {
 						const githubRes = await result.json();
-
-						const githubProfileImg = document.createElement("img");
-						githubProfileImg.src = githubRes["avatar_url"];
-						githubProfileImg.classList.add("logo");
-
-						const githubProfileAnchor = document.createElement("a");
-						githubProfileAnchor.href = githubRes["html_url"];
-						githubProfileAnchor.innerText = githubRes["login"];
-						this.loggedAS.replaceChildren(githubProfileImg, githubProfileAnchor);
+						this.githubProfileAvatar.src = githubRes["avatar_url"];
+						this.githubProfileAnchor.href = githubRes["html_url"];
+						this.githubProfileAnchor.innerText = githubRes["login"];
 						this.loginWithGithub.classList.add("hidden");
 						this.loggedAS.classList.remove("hidden");
-
 						this.loggedUser.githubLogin = githubRes["login"];
 						this.loggedUser.githubProfileURL = githubRes["html_url"];
 					}
