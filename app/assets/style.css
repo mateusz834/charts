@@ -151,6 +151,40 @@ body {
 	background: #cccaca;
 }
 
+#logged-as {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+
+	background: #cafaf6;
+	padding-right: 0.5em;
+	border-radius: 1em;
+}
+
+#logged-as > a {
+	text-decoration: none;
+}
+
+.logo {
+	width: 2rem;
+	height: 2rem;
+	border-radius: 1em;
+}
+
+#login-with-github {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+
+	background: #cafaf6;
+	padding-right: 0.5em;
+	border-radius: 1em;
+}
+
+#login-with-github > a {
+	text-decoration: none;
+}
+
 .inputlabel {
 	background: #cafaf6;
 	padding: 0.25em 1.5em;

@@ -1,5 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
 	const chart = {
+		loggedAS: document.getElementById("logged-as"),
+		loginWithGithub: document.getElementById("login-with-github"),
+
 		yearInput: document.getElementById("year"),
 		chartResetButton : document.getElementById("reset"),
 		chart: document.getElementById("chart"),
@@ -27,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		preview: false,
 
-		start: function() {
+		start: async function() {
 			let saved;
 
 			const url = new URL(document.location.href);
@@ -55,39 +58,6 @@ document.addEventListener("DOMContentLoaded", () => {
 				return num
 			}
 
-			this.shareModalOpenButton.addEventListener("click", async () => {
-				const result = await fetch("/user-info", { method: "POST" });
-				if (result.status === 200) {
-					const res = await result.json();
-					if (res["github_user_id"] !== undefined) {
-						this.publicShareLoggedAS.classList.add("hidden");
-						this.publicShareForm.classList.remove("hidden");
-						this.publicShareGithubLogin.classList.add("hidden");
-						setTimeout(async () => {
-							const result = await fetch("https://api.github.com/user/" + res["github_user_id"]);
-							if (result.status === 200) {
-								const githubRes = await result.json();
-								const githubProfileAnchor = document.createElement("a");
-								githubProfileAnchor.href = githubRes["html_url"];
-								githubProfileAnchor.innerText = githubRes["login"];
-								this.publicShareLoggedAS.replaceChildren("Share as: ", githubProfileAnchor);
-								this.publicShareLoggedAS.classList.remove("hidden");
-							}
-						}, 0);
-					} else {
-						this.publicShareForm.classList.add("hidden");
-						this.publicShareGithubLogin.classList.remove("hidden");
-					}
-				} else {
-					this.publicShareGithubLogin.classList.add("hidden");
-					this.publicShareForm.classList.add("hidden");
-				}
-
-				this.publicShareURLResult.classList.add("hidden");
-				this.publicShareCustomPathStatus.innerText = "";
-				this.publicShareCustomPathStatus.classList.add("hidden");
-				this.shareModal.classList.remove("hidden");
-			});
 
 			this.shareModalCloseButton.addEventListener("click", () => {
 				this.shareModal.classList.add("hidden");
@@ -137,7 +107,6 @@ document.addEventListener("DOMContentLoaded", () => {
 				});
 				if (result.status == 200) {
 					const res = await result.json();
-
 					if (res["error_type"] === undefined) {
 						this.publicShareForm.classList.add("hidden");
 						this.publicShareURLResult.href = "/s/" + res.path;
@@ -228,7 +197,57 @@ document.addEventListener("DOMContentLoaded", () => {
 						return;
 					}
 					this.clickWithBlock(e.target);
+				} });
+
+			const result = await fetch("/user-info", { method: "POST" });
+			if (result.status === 200) {
+				const res = await result.json();
+				if (res["github_user_id"] !== undefined) {
+					this.loggedUser = {
+						githubUserID: res["github_user_id"],
+						githubLogin: null,
+						githubProfileURL: null,
+					};
+
+					const result = await fetch("https://api.github.com/user/" + res["github_user_id"]);
+					if (result.status === 200) {
+						const githubRes = await result.json();
+
+						const githubProfileImg = document.createElement("img");
+						githubProfileImg.src = githubRes["avatar_url"];
+						githubProfileImg.classList.add("logo");
+
+						const githubProfileAnchor = document.createElement("a");
+						githubProfileAnchor.href = githubRes["html_url"];
+						githubProfileAnchor.innerText = githubRes["login"];
+						this.loggedAS.replaceChildren(githubProfileImg, githubProfileAnchor);
+						this.loginWithGithub.classList.add("hidden");
+						this.loggedAS.classList.remove("hidden");
+
+						this.loggedUser.githubLogin = githubRes["login"];
+						this.loggedUser.githubProfileURL = githubRes["html_url"];
+					}
 				}
+			}
+
+			this.shareModalOpenButton.addEventListener("click", async () => {
+				if (this.loggedUser === undefined) {
+					this.publicShareForm.classList.add("hidden");
+					this.publicShareGithubLogin.classList.remove("hidden");
+				} else {
+					this.publicShareLoggedAS.classList.add("hidden");
+					this.publicShareForm.classList.remove("hidden");
+					this.publicShareGithubLogin.classList.add("hidden");
+					const githubProfileAnchor = document.createElement("a");
+					githubProfileAnchor.href = this.loggedUser.githubProfileURL;
+					githubProfileAnchor.innerText = this.loggedUser.githubLogin;
+					this.publicShareLoggedAS.replaceChildren("Share as: ", githubProfileAnchor);
+					this.publicShareLoggedAS.classList.remove("hidden");
+				}
+				this.publicShareURLResult.classList.add("hidden");
+				this.publicShareCustomPathStatus.innerText = "";
+				this.publicShareCustomPathStatus.classList.add("hidden");
+				this.shareModal.classList.remove("hidden");
 			});
 		},
 
