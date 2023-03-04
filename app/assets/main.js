@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		githubProfileAnchor: document.getElementById("github-profile-anchor"),
 		githubProfileAvatar: document.getElementById("github-profile-avatar"),
 		loginWithGithub: document.getElementById("login-with-github"),
+		moreOptions: document.getElementById("more-options"),
+		moreOptionsSection: document.getElementById("more-options-section"),
 
 		yearInput: document.getElementById("year"),
 		chartResetButton : document.getElementById("reset"),
@@ -59,6 +61,18 @@ document.addEventListener("DOMContentLoaded", () => {
 				}
 				return num
 			}
+
+			this.moreOptions.addEventListener("click", () => {
+				this.moreOptionsSection.classList.toggle("hidden");
+			});
+
+			document.addEventListener("click", (e) => {
+				if (!this.moreOptionsSection.classList.contains("hidden")) {
+					if (e.target !== this.moreOptions && e.target !== this.moreOptionsSection) {
+						this.moreOptionsSection.classList.add("hidden")
+					}
+				}
+			});
 
 
 			this.shareModalCloseButton.addEventListener("click", () => {

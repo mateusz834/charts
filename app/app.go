@@ -197,6 +197,8 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	// - "auth" -> authentication error (probaly expired), so user is not authenticated.
 	mux.Handle("/user-info", httpMethod(http.MethodPost, a.userInfo).Handler())
 
+	mux.Handle("/logout", httpMethod(http.MethodGet, a.logout).Handler())
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)

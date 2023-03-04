@@ -158,3 +158,17 @@ func (a *application) userInfo(w http.ResponseWriter, r *http.Request) error {
 
 	return sendJSON(w, http.StatusOK, response{GithubUserID: githubUserID})
 }
+
+func (a *application) logout(w http.ResponseWriter, r *http.Request) error {
+	// TODO: remove the session from storage, for now only removing the session cookie.
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "__Host-session",
+		Path:    "/",
+		Expires: time.UnixMicro(0),
+		MaxAge:  -1,
+		Secure:  true,
+	})
+	http.Redirect(w, r, "/", http.StatusFound)
+	return nil
+}
