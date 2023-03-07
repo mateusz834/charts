@@ -108,3 +108,26 @@ func (d *SqliteStorage) GetShare(path string) (*Share, error) {
 
 	return ret, nil
 }
+
+func (d *SqliteStorage) GetUserShares(githubUserID uint64) ([]Share, error) {
+	res, err := d.sql.Query("SELECT path, chart FROM shares WHERE github_user_id = ?", githubUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	shares := make([]Share, 0, 8)
+	for res.Next() {
+		share := Share{GithubUserID: githubUserID}
+		// TODO: is this required for correct error handling, doesn't the Err() method below hadle that too.??
+		if err := res.Scan(&share.Path, &share.Chart); err != nil {
+			return nil, err
+		}
+		shares = append(shares, share)
+	}
+
+	if err := res.Err(); err != nil {
+		return nil, err
+	}
+
+	return shares, nil
+}

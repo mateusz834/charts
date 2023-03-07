@@ -1,3 +1,5 @@
+{{define "html-class"}}html-100{{end}}
+
 {{define "head"}}
 <script defer src="/assets/main.js"></script>
 {{end}}
@@ -23,7 +25,8 @@
 				<span>show more options</span>
 			</button>
 
-			<section id="more-options-section" class="hidden">
+			<section id="more-options-section" class="flex-column gap-05 hidden">
+				<a href="/my-shares">My public shares</a>
 				<a href="/logout">Logout</a>
 			</section>
 		</div>
@@ -35,7 +38,7 @@
 	</div>
 
 	<div>
-		<div id="chart"></div>
+		<div id="chart" class="chart"></div>
 	</div>
 
 	<div id="chart-git-reproducer" class="flex-grow flex-column gap-15 hidden">

@@ -13,6 +13,7 @@ type SharesStorage interface {
 	IsPathAvail(path string) (bool, error)
 	CreateShare(share *storage.Share) (bool, error)
 	GetShare(path string) (*storage.Share, error)
+	GetUserShares(githubUserID uint64) ([]storage.Share, error)
 }
 
 type SharesService struct {
@@ -110,6 +111,7 @@ func (s *SharesService) CreateShare(req *CreateShare) (string, error) {
 
 type Share struct {
 	GithubUserID uint64
+	Path         string
 	EncodedChart string
 }
 
@@ -124,6 +126,30 @@ func (s *SharesService) GetShare(path string) (*Share, error) {
 	}
 	return &Share{
 		GithubUserID: share.GithubUserID,
+		Path:         path,
 		EncodedChart: encoded,
 	}, nil
+}
+
+func (s *SharesService) GetAllUserShares(githubUserID uint64) ([]Share, error) {
+	shares, err := s.storage.GetUserShares(githubUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]Share, len(shares))
+	for i, v := range shares {
+		encodedChart, err := chart.Encode(v.Chart)
+		if err != nil {
+			return nil, err
+		}
+
+		res[i] = Share{
+			GithubUserID: v.GithubUserID,
+			Path:         v.Path,
+			EncodedChart: encodedChart,
+		}
+	}
+
+	return res, nil
 }

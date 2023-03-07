@@ -109,6 +109,7 @@ type PublicSharesService interface {
 	IsPathAvail(path string) (bool, error)
 	CreateShare(req *service.CreateShare) (string, error)
 	GetShare(path string) (*service.Share, error)
+	GetAllUserShares(githubUserID uint64) ([]service.Share, error)
 }
 
 type application struct {
@@ -197,7 +198,15 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	// - "auth" -> authentication error (probaly expired), so user is not authenticated.
 	mux.Handle("/user-info", httpMethod(http.MethodPost, a.userInfo).Handler())
 
+	mux.Handle("/get-all-user-shares", httpMethod(http.MethodGet, a.getAllUserShares).Handler())
 	mux.Handle("/logout", httpMethod(http.MethodGet, a.logout).Handler())
+
+	mux.HandleFunc("/my-shares", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		// TODO: same thing here as with sendJSON for error handling.
+		templates.MyShares(w)
+	})
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {

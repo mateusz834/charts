@@ -15,15 +15,7 @@ body {
 }
 
 #chart {
-	display: flex;
-	gap: 3px;
-
-	overflow-x: scroll;
-	border: 2px solid grey;
-	padding: min(max(1vw, 6px), 1rem);
-	background: #cafaf6;
 	margin: 0 auto;
-	max-width: max-content;
 }
 
 .week {
@@ -67,13 +59,54 @@ body {
 	margin: 0.5rem auto;
 }
 
+.chart {
+	display: flex;
+	gap: 3px;
+
+	overflow-x: scroll;
+	border: 2px solid grey;
+	padding: min(max(1vw, 6px), 1rem);
+	background: #cafaf6;
+	max-width: max-content;
+}
+
+#my-public-shares {
+	text-align: center;
+	max-width: min-content;
+	margin: 0 auto;
+}
+
+#my-public-shares > h1 {
+	font-size: 1.5em;
+	padding: 1em;
+}
+
+.chart-controls {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: 1;
+}
+
+.chart-controls a {
+	display: inline-block;
+	padding: 1em;
+	text-decoration: none;
+	overflow-wrap: anywhere;
+}
+
+.chart-controls button {
+	margin: 1em;
+	white-space: nowrap;
+}
+
 @media (min-height: 40rem) {
 	.cmd-wrapper {
 		flex-grow: 1;
 		height: 0;
 	}
 
-	html, body, main {
+	.html-100, body, main {
 		height: 100%;
 	}
 }
@@ -212,6 +245,8 @@ body {
 #more-options-section {
 	position: absolute;
 	top: 2.5rem;
+	left: 0;
+	right: 0;
 	padding: 0.75em;
 	background: #cafaf6;
 	width: 100%;
@@ -222,6 +257,7 @@ body {
 	color: black;
 	text-decoration: none;
 	display: block;
+	border: 2px solid gray;
 }
 
 .input {

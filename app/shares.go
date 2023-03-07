@@ -114,3 +114,42 @@ func (a *application) shareVisit(w http.ResponseWriter, r *http.Request) error {
 	http.Redirect(w, r, "/?s="+share.EncodedChart, http.StatusFound)
 	return nil
 }
+
+func (a *application) getAllUserShares(w http.ResponseWriter, r *http.Request) error {
+	githubUserID, err := a.authenticate(r)
+	if err != nil {
+		var publicError service.PublicError
+		if errors.As(err, &publicError) {
+			type errResponse struct {
+				ErrorType string `json:"error_type"`
+				ErrorMsg  string `json:"error_msg"`
+			}
+
+			if err := sendJSON(w, http.StatusOK, errResponse{
+				ErrorType: "auth",
+				ErrorMsg:  publicError.PublicError(),
+			}); err != nil {
+				return err
+			}
+			return &debugError{err}
+		}
+		return err
+	}
+
+	shares, err := a.publicSharesService.GetAllUserShares(githubUserID)
+	if err != nil {
+		return err
+	}
+
+	type share struct {
+		Path  string `json:"path"`
+		Chart string `json:"chart"`
+	}
+
+	res := make([]share, len(shares))
+	for i, v := range shares {
+		res[i] = share{Path: v.Path, Chart: v.EncodedChart}
+	}
+
+	return sendJSON(w, http.StatusOK, res)
+}
