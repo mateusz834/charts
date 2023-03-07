@@ -14,6 +14,7 @@ type SharesStorage interface {
 	CreateShare(share *storage.Share) (bool, error)
 	GetShare(path string) (*storage.Share, error)
 	GetUserShares(githubUserID uint64) ([]storage.Share, error)
+	RemoveShare(path string, githubUserID uint64) error
 }
 
 type SharesService struct {
@@ -152,4 +153,8 @@ func (s *SharesService) GetAllUserShares(githubUserID uint64) ([]Share, error) {
 	}
 
 	return res, nil
+}
+
+func (s *SharesService) RemoveShare(path string, githubUserID uint64) error {
+	return s.storage.RemoveShare(path, githubUserID)
 }

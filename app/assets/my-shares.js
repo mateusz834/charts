@@ -16,6 +16,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 		controls.appendChild(a);
 
 		const removeButton = document.createElement("button");
+		removeButton.addEventListener("click", async () => {
+			const removePath = res[i].path;
+			const result = await fetch("/remove-chart", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ path : removePath })
+			});
+			const resJSON = await result.json();
+			chart.remove();
+		});
 		removeButton.innerText = "Delete Share";
 		removeButton.classList.add("button");
 		removeButton.classList.add("button-red");

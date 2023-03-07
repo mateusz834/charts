@@ -131,3 +131,11 @@ func (d *SqliteStorage) GetUserShares(githubUserID uint64) ([]Share, error) {
 
 	return shares, nil
 }
+
+func (d *SqliteStorage) RemoveShare(path string, githubUserID uint64) error {
+	_, err := d.sql.Exec("DELETE FROM shares WHERE github_user_id = ? AND path = ?", githubUserID, path)
+	if err != nil {
+		return err
+	}
+	return nil
+}

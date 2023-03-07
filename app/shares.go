@@ -153,3 +153,39 @@ func (a *application) getAllUserShares(w http.ResponseWriter, r *http.Request) e
 
 	return sendJSON(w, http.StatusOK, res)
 }
+
+func (a *application) removeChart(w http.ResponseWriter, r *http.Request) error {
+	reqBody := struct {
+		Path string `json:"path"`
+	}{}
+
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		return &httpError{ResponseCode: http.StatusBadRequest, DebugErr: err}
+	}
+
+	githubUserID, err := a.authenticate(r)
+	if err != nil {
+		var publicError service.PublicError
+		if errors.As(err, &publicError) {
+			type errResponse struct {
+				ErrorType string `json:"error_type"`
+				ErrorMsg  string `json:"error_msg"`
+			}
+
+			if err := sendJSON(w, http.StatusOK, errResponse{
+				ErrorType: "auth",
+				ErrorMsg:  publicError.PublicError(),
+			}); err != nil {
+				return err
+			}
+			return &debugError{err}
+		}
+		return err
+	}
+
+	if err := a.publicSharesService.RemoveShare(reqBody.Path, githubUserID); err != nil {
+		return err
+	}
+
+	return sendJSON(w, http.StatusOK, struct{}{})
+}

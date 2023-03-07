@@ -85,7 +85,6 @@ body {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	flex-wrap: 1;
 }
 
 .chart-controls a {

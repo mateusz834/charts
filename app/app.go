@@ -110,6 +110,7 @@ type PublicSharesService interface {
 	CreateShare(req *service.CreateShare) (string, error)
 	GetShare(path string) (*service.Share, error)
 	GetAllUserShares(githubUserID uint64) ([]service.Share, error)
+	RemoveShare(path string, githubUserID uint64) error
 }
 
 type application struct {
@@ -197,6 +198,16 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	// error_type is one of following:
 	// - "auth" -> authentication error (probaly expired), so user is not authenticated.
 	mux.Handle("/user-info", httpMethod(http.MethodPost, a.userInfo).Handler())
+
+	// Accepts JSON: { "path": "path" }
+	// Return (200 OK) with one following responses:
+	// (on success) {} (empty json)
+	// (on error) { "error_type": "error_type", "error_msg": "error_msg" }
+	// error_type is one of following:
+	// - "auth" -> authenticated error
+	mux.Handle("/remove-chart", httpMethod(http.MethodPost,
+		requireJSONContentType(a.removeChart),
+	).Handler())
 
 	mux.Handle("/get-all-user-shares", httpMethod(http.MethodGet, a.getAllUserShares).Handler())
 	mux.Handle("/logout", httpMethod(http.MethodGet, a.logout).Handler())
