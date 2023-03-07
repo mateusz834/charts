@@ -1,6 +1,16 @@
 document.addEventListener("DOMContentLoaded", async () => {
 	const result = await fetch("/get-all-user-shares");
+	if (result.status !== 200) {
+		window.location.href = "/";
+		return;
+	}
+
 	const res = await result.json();
+	if (res["error_type"] !== undefined) {
+		window.location.href = "/";
+		return;
+	}
+
 	for (let i = 0; i < res.length; i++) {
 		const clicked = decodeChart(res[i].chart);
 		const date = new Date(clicked[0]);
