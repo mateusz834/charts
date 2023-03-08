@@ -144,6 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			});
 
 			this.publicShareEnableCustomPath.addEventListener("click", () => {
+				this.publicShareCustomPathStatus.classList.add("hidden");
 				if (this.publicShareEnableCustomPath.checked) {
 					this.publicShareUrlWrapper.classList.remove("hidden");
 				} else {

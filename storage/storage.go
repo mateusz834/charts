@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/mattn/go-sqlite3"
 )
@@ -83,7 +84,25 @@ type Share struct {
 	Chart        []byte
 }
 
-func (d *SqliteStorage) CreateShare(share *Share) (bool, error) {
+var createShareMutex sync.Mutex
+var ErrTooMuchShares = errors.New("too much shares")
+
+func (d *SqliteStorage) CreateShare(share *Share, maxSharesPerUser int) (bool, error) {
+	// Not sure how sqlite implements sql transactins, so using a mutex to ensure that
+	// there is no race condition (max shares count check not running concurrently).
+	createShareMutex.Lock()
+	defer createShareMutex.Unlock()
+
+	var count int
+	row := d.sql.QueryRow("SELECT COUNT(*) FROM shares WHERE github_user_id = ?", share.GithubUserID)
+	if err := row.Scan(&count); err != nil {
+		return false, err
+	}
+
+	if count >= maxSharesPerUser {
+		return false, ErrTooMuchShares
+	}
+
 	_, err := d.sql.Exec("INSERT INTO shares VALUES(?, ?, ?, UNIXEPOCH())", share.GithubUserID, share.Path, share.Chart)
 	if err != nil {
 		var sqliteErr sqlite3.Error

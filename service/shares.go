@@ -11,7 +11,7 @@ import (
 
 type SharesStorage interface {
 	IsPathAvail(path string) (bool, error)
-	CreateShare(share *storage.Share) (bool, error)
+	CreateShare(share *storage.Share, maxPerUserSharesCount int) (bool, error)
 	GetShare(path string) (*storage.Share, error)
 	GetUserShares(githubUserID uint64) ([]storage.Share, error)
 	RemoveShare(path string, githubUserID uint64) error
@@ -65,6 +65,7 @@ type CreateShare struct {
 }
 
 var ErrPathUnavail = errors.New("path is not available")
+var ErrTooMuchShares = errors.New("you have created too much public shares 250/250")
 
 type CreateShareError struct {
 	Type string
@@ -97,9 +98,12 @@ func (s *SharesService) CreateShare(req *CreateShare) (string, error) {
 		GithubUserID: req.GithubUserID,
 		Path:         path,
 		Chart:        chart,
-	})
+	}, 250)
 
 	if err != nil {
+		if errors.Is(err, storage.ErrTooMuchShares) {
+			return "", &CreateShareError{"path", ErrTooMuchShares}
+		}
 		return "", err
 	}
 
