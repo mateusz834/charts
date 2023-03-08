@@ -58,24 +58,9 @@ func (a *application) createShare(w http.ResponseWriter, r *http.Request) error 
 		ErrorMsg  string `json:"error_msg"`
 	}
 
-	githubUserID, err := a.authenticate(r)
-	if err != nil {
-		var publicError service.PublicError
-		if errors.As(err, &publicError) {
-			if err := sendJSON(w, http.StatusOK, errResponse{
-				ErrorType: "auth",
-				ErrorMsg:  publicError.PublicError(),
-			}); err != nil {
-				return err
-			}
-			return &debugError{err}
-		}
-		return err
-	}
-
 	createShare := &service.CreateShare{
 		EncodedChart: reqBody.Chart,
-		GithubUserID: githubUserID,
+		GithubUserID: a.getGithubUserID(r),
 	}
 
 	if reqBody.CustomPath != nil {
@@ -116,27 +101,7 @@ func (a *application) shareVisit(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (a *application) getAllUserShares(w http.ResponseWriter, r *http.Request) error {
-	githubUserID, err := a.authenticate(r)
-	if err != nil {
-		var publicError service.PublicError
-		if errors.As(err, &publicError) {
-			type errResponse struct {
-				ErrorType string `json:"error_type"`
-				ErrorMsg  string `json:"error_msg"`
-			}
-
-			if err := sendJSON(w, http.StatusOK, errResponse{
-				ErrorType: "auth",
-				ErrorMsg:  publicError.PublicError(),
-			}); err != nil {
-				return err
-			}
-			return &debugError{err}
-		}
-		return err
-	}
-
-	shares, err := a.publicSharesService.GetAllUserShares(githubUserID)
+	shares, err := a.publicSharesService.GetAllUserShares(a.getGithubUserID(r))
 	if err != nil {
 		return err
 	}
@@ -163,27 +128,7 @@ func (a *application) removeChart(w http.ResponseWriter, r *http.Request) error 
 		return &httpError{ResponseCode: http.StatusBadRequest, DebugErr: err}
 	}
 
-	githubUserID, err := a.authenticate(r)
-	if err != nil {
-		var publicError service.PublicError
-		if errors.As(err, &publicError) {
-			type errResponse struct {
-				ErrorType string `json:"error_type"`
-				ErrorMsg  string `json:"error_msg"`
-			}
-
-			if err := sendJSON(w, http.StatusOK, errResponse{
-				ErrorType: "auth",
-				ErrorMsg:  publicError.PublicError(),
-			}); err != nil {
-				return err
-			}
-			return &debugError{err}
-		}
-		return err
-	}
-
-	if err := a.publicSharesService.RemoveShare(reqBody.Path, githubUserID); err != nil {
+	if err := a.publicSharesService.RemoveShare(reqBody.Path, a.getGithubUserID(r)); err != nil {
 		return err
 	}
 

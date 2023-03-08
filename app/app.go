@@ -176,7 +176,7 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	mux.Handle("/create-share",
 		httpMethod(
 			http.MethodPost,
-			requireJSONContentType(a.createShare),
+			requireJSONContentType(a.auth(a.createShare)),
 		).Handler(),
 	)
 
@@ -197,7 +197,7 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	// (on error) { "error_type": "error_type", error_msg: "error msg" }
 	// error_type is one of following:
 	// - "auth" -> authentication error (probaly expired), so user is not authenticated.
-	mux.Handle("/user-info", httpMethod(http.MethodPost, a.userInfo).Handler())
+	mux.Handle("/user-info", httpMethod(http.MethodPost, a.auth(a.userInfo)).Handler())
 
 	// Accepts JSON: { "path": "path" }
 	// Return (200 OK) with one following responses:
@@ -206,10 +206,10 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 	// error_type is one of following:
 	// - "auth" -> authenticated error
 	mux.Handle("/remove-chart", httpMethod(http.MethodPost,
-		requireJSONContentType(a.removeChart),
+		requireJSONContentType(a.auth(a.removeChart)),
 	).Handler())
 
-	mux.Handle("/get-all-user-shares", httpMethod(http.MethodGet, a.getAllUserShares).Handler())
+	mux.Handle("/get-all-user-shares", httpMethod(http.MethodGet, a.auth(a.getAllUserShares)).Handler())
 	mux.Handle("/logout", httpMethod(http.MethodGet, a.logout).Handler())
 
 	mux.HandleFunc("/my-shares", func(w http.ResponseWriter, _ *http.Request) {

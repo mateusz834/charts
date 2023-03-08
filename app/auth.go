@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
@@ -10,6 +11,36 @@ import (
 
 	"github.com/mateusz834/charts/service"
 )
+
+type githubUserIDKey uint8
+
+func (a *application) auth(handler errHandler) errHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		githubUserID, err := a.authenticate(r)
+		if err != nil {
+			var publicError service.PublicError
+			if errors.As(err, &publicError) {
+				type errResponse struct {
+					ErrorType string `json:"error_type"`
+					ErrorMsg  string `json:"error_msg"`
+				}
+				if err := sendJSON(w, http.StatusOK, errResponse{
+					ErrorType: "auth",
+					ErrorMsg:  publicError.PublicError(),
+				}); err != nil {
+					return err
+				}
+				return &debugError{err}
+			}
+			return err
+		}
+		return handler(w, r.WithContext(context.WithValue(r.Context(), githubUserIDKey(0), githubUserID)))
+	}
+}
+
+func (a *application) getGithubUserID(r *http.Request) uint64 {
+	return r.Context().Value(githubUserIDKey(0)).(uint64)
+}
 
 func (a *application) authenticate(r *http.Request) (uint64, error) {
 	cookie, err := r.Cookie("__Host-session")
@@ -134,30 +165,10 @@ func (a *application) githubLoginCallback(w http.ResponseWriter, r *http.Request
 }
 
 func (a *application) userInfo(w http.ResponseWriter, r *http.Request) error {
-	githubUserID, err := a.authenticate(r)
-	if err != nil {
-		var publicError service.PublicError
-		if errors.As(err, &publicError) {
-			type errResponse struct {
-				ErrorType string `json:"error_type"`
-				ErrorMsg  string `json:"error_msg"`
-			}
-			if err := sendJSON(w, http.StatusOK, errResponse{
-				ErrorType: "auth",
-				ErrorMsg:  publicError.PublicError(),
-			}); err != nil {
-				return err
-			}
-			return &debugError{err}
-		}
-		return err
-	}
-
 	type response struct {
 		GithubUserID uint64 `json:"github_user_id"`
 	}
-
-	return sendJSON(w, http.StatusOK, response{GithubUserID: githubUserID})
+	return sendJSON(w, http.StatusOK, response{GithubUserID: a.getGithubUserID(r)})
 }
 
 func (a *application) logout(w http.ResponseWriter, r *http.Request) error {
