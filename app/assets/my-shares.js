@@ -33,8 +33,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ path : removePath })
 			});
-			const resJSON = await result.json();
-			chart.remove();
+			if (result.status === 200) {
+				const resJSON = await result.json();
+				if (resJSON["error_type"] !== undefined) {
+					window.location.href = "/";
+					return;
+				}
+				chart.remove();
+			}
 		});
 		removeButton.innerText = "Delete Share";
 		removeButton.classList.add("button");

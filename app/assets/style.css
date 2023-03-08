@@ -72,13 +72,16 @@ body {
 
 #my-public-shares {
 	text-align: center;
-	max-width: min-content;
-	margin: 0 auto;
 }
 
 #my-public-shares > h1 {
 	font-size: 1.5em;
 	padding: 1em;
+}
+
+#charts {
+	max-width: min-content;
+	margin: 0 auto;
 }
 
 .chart-controls {
