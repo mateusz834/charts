@@ -60,22 +60,54 @@ document.addEventListener("DOMContentLoaded", async () => {
 	h2.innerText = "Git cmd reproducer";
 	gitReproducer.append(h2);
 
-	let cmds = "";
-	chart.querySelectorAll(".clicked").forEach((node) => {
-		if (cmds !== "") {
-			// TODO: the default commit message to be a url ????
-			cmds += "\n" + "git commit --date \"" + node.dataset.date + "\" -m \"" + "TODO" + "\""
-		} else {
-			cmds = "git commit --date \"" + node.dataset.date + "\" -m \"" + "TODO" + "\""
-		}
+	const gitReproControls = document.createElement("div");
+	gitReproControls.classList.add("flex-row", "flex-center", "gap-05");
+
+
+	const commitMessageLabel = document.createElement("label");
+	commitMessageLabel.classList.add("inputlabel");
+	const commitMessageInput = document.createElement("input");
+	commitMessageInput.classList.add("input");
+	commitMessageInput.type = "text";
+	commitMessageInput.autocomplete = "off";
+	commitMessageInput.value = document.location.host + document.location.pathname;
+	commitMessageLabel.append("Commit message: ", commitMessageInput);
+
+	const code = document.createElement("code");
+	code.id = "cmd";
+
+	const commitMessageUpdate = () => {
+		let cmds = "";
+		chart.querySelectorAll(".clicked").forEach((node) => {
+			if (cmds !== "") {
+				cmds += "\n" + "git commit --date \"" + node.dataset.date + "\" -m \"" + commitMessageInput.value + "\""
+			} else {
+				cmds = "git commit --date \"" + node.dataset.date + "\" -m \"" + commitMessageInput.value + "\""
+			}
+		});
+		code.innerText = cmds;
+	};
+
+	commitMessageInput.addEventListener("input", () => {
+		commitMessageUpdate();
 	});
+	commitMessageUpdate();
+
+	const copyButton = document.createElement("button");
+	copyButton.addEventListener("click", () => {
+		 navigator.clipboard.writeText(code.innerText);
+	});
+	copyButton.classList.add("button", "button-yellow");
+	copyButton.innerText = "Copy to clipboard";
+
+	gitReproControls.append(commitMessageLabel);
+	gitReproControls.append(copyButton);
+
+	gitReproducer.append(gitReproControls);
 
 	const cmdWrapper = document.createElement("div");
 	cmdWrapper.classList.add("cmd-wrapper");
 
-	const code = document.createElement("code");
-	code.id = "cmd";
-	code.innerText = cmds;
 	cmdWrapper.append(code);
 
 	gitReproducer.append(cmdWrapper);
