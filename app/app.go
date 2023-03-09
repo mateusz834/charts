@@ -157,7 +157,14 @@ func requireJSONContentType(handler errHandler) errHandler {
 
 func (a *application) setRoutes(mux *http.ServeMux) {
 	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
-	mux.Handle("/s/", errHandler(httpMethod(http.MethodGet, a.shareVisit)).Handler())
+
+	mux.HandleFunc("/share/", httpMethod(http.MethodGet, a.shareInfo).Handler())
+	mux.HandleFunc("/s/", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		// TODO: same thing here as with sendJSON for error handling.
+		templates.Share(w)
+	})
 
 	mux.Handle("/github-login", httpMethod(http.MethodGet, a.githubLogin).Handler())
 	mux.Handle("/github-login-callback", httpMethod(http.MethodGet, a.githubLoginCallback).Handler())

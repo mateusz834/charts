@@ -86,18 +86,25 @@ func (a *application) createShare(w http.ResponseWriter, r *http.Request) error 
 	return sendJSON(w, http.StatusOK, response{Path: path})
 }
 
-func (a *application) shareVisit(w http.ResponseWriter, r *http.Request) error {
-	sharePath := strings.TrimPrefix(r.URL.Path, "/s/")
+func (a *application) shareInfo(w http.ResponseWriter, r *http.Request) error {
+	sharePath := strings.TrimPrefix(r.URL.Path, "/share/")
 	share, err := a.publicSharesService.GetShare(sharePath)
 	if err != nil {
 		if errors.Is(err, service.ErrNotFound) {
-			http.Redirect(w, r, "/", http.StatusFound)
-			return nil
+			return sendJSON(w, http.StatusOK, struct{}{})
 		}
 		return err
 	}
-	http.Redirect(w, r, "/?s="+share.EncodedChart, http.StatusFound)
-	return nil
+
+	type response struct {
+		Chart        string `json:"chart"`
+		GithubUserID uint64 `json:"github_user_id"`
+	}
+
+	return sendJSON(w, http.StatusOK, response{
+		Chart:        share.EncodedChart,
+		GithubUserID: share.GithubUserID,
+	})
 }
 
 func (a *application) getAllUserShares(w http.ResponseWriter, r *http.Request) error {

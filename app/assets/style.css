@@ -262,6 +262,64 @@ body {
 	border: 2px solid gray;
 }
 
+#chart-share {
+	height: 100%;
+	padding: 1.5em 0.5em;
+}
+
+#chart-share-controls {
+	padding: 1em;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 1em;
+}
+
+#chart-share-controls-year {
+	padding: 0.5em 1em;
+	border-radius: 1em;
+	background: #cafaf6;
+}
+
+#chart-share-chart {
+	margin: 0 auto;
+}
+
+#share-created-by-wrapper {
+	display: flex;
+	align-items: center;
+}
+
+#share-created-by {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+
+	background: #cafaf6;
+	padding-right: 0.5em;
+	margin-left: 0.5em;
+	border-radius: 1em;
+}
+
+#share-created-by img {
+	width: 2rem;
+	height: 2rem;
+	border-radius: 1em;
+}
+
+#share-created-by a {
+	text-decoration: none;
+}
+
+#share-git-reproducer {
+	padding-top: 1em;
+	text-align: center;
+	display: flex;
+	gap: 1.5em;
+	flex-direction: column;
+}
+
 .input {
 	width: 5rem;
 	border: none;
@@ -269,6 +327,9 @@ body {
 }
 
 .button {
+	font-size: 0.85rem;
+	color: black;
+	text-decoration: none;
 	padding: 0.5em 1.5em;
 	font-weight: 600;
 	border-radius: 1em;
