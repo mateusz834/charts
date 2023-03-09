@@ -90,10 +90,8 @@ func (a *application) shareInfo(w http.ResponseWriter, r *http.Request) error {
 	sharePath := strings.TrimPrefix(r.URL.Path, "/share/")
 	share, err := a.publicSharesService.GetShare(sharePath)
 	if err != nil {
-		if errors.Is(err, service.ErrNotFound) {
-			return sendJSON(w, http.StatusOK, struct{}{})
-		}
-		return err
+		w.WriteHeader(http.StatusNotFound)
+		return nil
 	}
 
 	type response struct {

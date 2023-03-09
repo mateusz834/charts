@@ -1,11 +1,12 @@
 document.addEventListener("DOMContentLoaded", async () => {
 	const path = document.location.pathname.substring(3);
 	const result = await fetch("/share/" + path);
-	const res = await result.json();
-	if (res["chart"] === undefined) {
+	if (result.status !== 200) {
 		document.location.href = "/";
 		return;
 	}
+
+	const res = await result.json();
 
 	const clicked = decodeChart(res["chart"]);
 	const date = new Date(clicked[0]);
