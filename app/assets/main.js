@@ -39,9 +39,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
 			const url = new URL(document.location.href);
 			const encodedChart = url.searchParams.get("s");
+			const forceedit = url.searchParams.get("forceedit");
 			if (encodedChart != null) {
 				saved = this.decodeChart(encodedChart);
-				this.preview = true;
+				if (forceedit === null) {
+					this.preview = true;
+				} else {
+					const url = new URL(document.location.href);
+					url.searchParams.delete("s");
+					url.searchParams.delete("forceedit");
+					history.replaceState({}, null, url);
+				}
 			} else {
 				saved = this.getSavedChart();
 			}
