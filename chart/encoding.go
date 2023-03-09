@@ -54,6 +54,19 @@ func Decode(enc string) ([]byte, error) {
 		}
 	}
 
+	nonZero := false
+	for _, v := range raw[2:n] {
+		if v != 0 {
+			nonZero = true
+			break
+		}
+	}
+
+	// Require that at least one day bit is set to 1.
+	if !nonZero {
+		return nil, errInvaldChartEndoding
+	}
+
 	return raw, nil
 }
 
