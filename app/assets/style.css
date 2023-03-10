@@ -18,6 +18,17 @@ body {
 	margin: 0 auto;
 }
 
+.chart {
+	display: flex;
+	gap: 3px;
+
+	overflow-x: scroll;
+	border: 2px solid grey;
+	padding: min(max(1vw, 6px), 1rem);
+	background: #cafaf6;
+	max-width: max-content;
+}
+
 .week {
 	display: flex;
 	flex-direction: column;
@@ -36,7 +47,7 @@ body {
 	background: black;
 }
 
-.day:hover {
+.chart-editable .day:hover {
 	background: lightgreen;
 }
 
@@ -44,7 +55,7 @@ body {
 	background: green;
 }
 
-.day.clicked:hover {
+.chart-editable .day.clicked:hover {
 	background: red;
 }
 
@@ -57,17 +68,6 @@ body {
 	padding: 0 0.75rem;
 	white-space: pre;
 	margin: 0.5rem auto;
-}
-
-.chart {
-	display: flex;
-	gap: 3px;
-
-	overflow-x: scroll;
-	border: 2px solid grey;
-	padding: min(max(1vw, 6px), 1rem);
-	background: #cafaf6;
-	max-width: max-content;
 }
 
 #my-public-shares {
