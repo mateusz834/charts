@@ -103,6 +103,7 @@ func sendJSON(w http.ResponseWriter, status int, content any) error {
 type SessionService interface {
 	NewSession(githubUserID uint64) (string, error)
 	IsSessionValid(session string) (uint64, error)
+	RemoveSession(session string) error
 }
 
 type PublicSharesService interface {

@@ -69,6 +69,11 @@ func (d *SqliteStorage) IsSessionValid(s *Session) error {
 	return nil
 }
 
+func (d *SqliteStorage) RemoveSession(s *Session) error {
+	_, err := d.sql.Exec("DELETE FROM sessions WHERE github_user_id = ? AND session_id = ?", s.GithubUserID, s.SessionID[:])
+	return err
+}
+
 func (d *SqliteStorage) IsPathAvail(path string) (bool, error) {
 	res, err := d.sql.Query("SELECT * FROM shares WHERE path = ?", path)
 	if err != nil {

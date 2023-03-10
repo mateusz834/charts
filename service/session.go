@@ -13,6 +13,7 @@ import (
 type SessionStorage interface {
 	StoreSession(s *storage.Session) error
 	IsSessionValid(s *storage.Session) error
+	RemoveSession(s *storage.Session) error
 }
 
 type SessionService struct {
@@ -53,6 +54,14 @@ func (s *SessionService) IsSessionValid(session string) (uint64, error) {
 		return 0, err
 	}
 	return ses.GithubUserID, nil
+}
+
+func (s *SessionService) RemoveSession(session string) error {
+	ses, err := decodeSession(session)
+	if err != nil {
+		return err
+	}
+	return s.storage.RemoveSession(ses)
 }
 
 func encodeSession(s *storage.Session) string {

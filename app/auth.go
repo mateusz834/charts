@@ -172,7 +172,11 @@ func (a *application) userInfo(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (a *application) logout(w http.ResponseWriter, r *http.Request) error {
-	// TODO: remove the session from storage, for now only removing the session cookie.
+	if s, err := r.Cookie("__Host-session"); err == nil {
+		if err := a.sessionService.RemoveSession(s.Value); err != nil {
+			return err
+		}
+	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:    "__Host-session",
