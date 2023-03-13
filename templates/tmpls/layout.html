@@ -5,10 +5,32 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Charts | Generate your custom github summary charts</title>
 		<link rel="stylesheet" href="/assets/style.css">
+		<script defer src="/assets/loggedUser.js"></script>
 		{{ template "head" . }}
 	</head>
 	<body>
-		<main>
+		<main class="flex-column">
+			<nav class="nav">
+				<a href="/">Editor</a>
+				<div id="logged-as" class="hidden">
+					<img id="github-profile-avatar" class="logo">
+					<a id="github-profile-anchor"></a>
+					<button id="more-options">
+						<span>show more options</span>
+					</button>
+
+					<section id="more-options-section" class="flex-column gap-05 hidden">
+						<a href="/my-shares">My public shares</a>
+						<a href="/logout">Logout</a>
+					</section>
+				</div>
+
+				<div id="login-with-github">
+					<img class="logo" src="/assets/github-mark.svg" alt="">
+					<a href="/github-login">Login with Github</a>
+				</div>
+			</nav>
+
 			{{ template "content" . }}
 		</main>
 	</body>

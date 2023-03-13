@@ -253,6 +253,7 @@ body {
 	background: #cafaf6;
 	width: 100%;
 	border-radius: 0.5em;
+	text-align: center;
 }
 
 #more-options-section > a {
@@ -401,4 +402,27 @@ body {
 
 .lightred {
 	color: #fa3737;
+}
+
+.nav {
+	position: sticky;
+	background: #afe2de;
+	padding: 0.50em 1em;
+	box-shadow: 0px -8px 17px 0px rgba(66, 68, 90, 1);
+
+	display: flex;
+	justify-content: space-between
+}
+
+.nav > a {
+	text-decoration: none;
+	color: black;
+	font-weight: 600;
+	padding: 0.25em 1em;
+	font-size: 1.125em;
+	border-radius: 0.5em;
+}
+
+.nav > a:hover {
+	background: #96e1db;
 }

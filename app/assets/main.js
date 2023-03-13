@@ -70,19 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
 				return num
 			}
 
-			this.moreOptions.addEventListener("click", () => {
-				this.moreOptionsSection.classList.toggle("hidden");
-			});
-
-			document.addEventListener("click", (e) => {
-				if (!this.moreOptionsSection.classList.contains("hidden")) {
-					if (e.target !== this.moreOptions && e.target !== this.moreOptionsSection) {
-						this.moreOptionsSection.classList.add("hidden")
-					}
-				}
-			});
-
-
 			this.shareModalCloseButton.addEventListener("click", () => {
 				this.shareModal.classList.add("hidden");
 			});
@@ -224,32 +211,8 @@ document.addEventListener("DOMContentLoaded", () => {
 					this.clickWithBlock(e.target);
 				} });
 
-			const result = await fetch("/user-info", { method: "POST" });
-			if (result.status === 200) {
-				const res = await result.json();
-				if (res["github_user_id"] !== undefined) {
-					this.loggedUser = {
-						githubUserID: res["github_user_id"],
-						githubLogin: null,
-						githubProfileURL: null,
-					};
-
-					const result = await fetch("https://api.github.com/user/" + res["github_user_id"]);
-					if (result.status === 200) {
-						const githubRes = await result.json();
-						this.githubProfileAvatar.src = githubRes["avatar_url"];
-						this.githubProfileAnchor.href = githubRes["html_url"];
-						this.githubProfileAnchor.innerText = githubRes["login"];
-						this.loginWithGithub.classList.add("hidden");
-						this.loggedAS.classList.remove("hidden");
-						this.loggedUser.githubLogin = githubRes["login"];
-						this.loggedUser.githubProfileURL = githubRes["html_url"];
-					}
-				}
-			}
-
 			this.shareModalOpenButton.addEventListener("click", async () => {
-				if (this.loggedUser === undefined) {
+				if (window.loggedUser === undefined) {
 					this.publicShareForm.classList.add("hidden");
 					this.publicShareGithubLogin.classList.remove("hidden");
 				} else {
@@ -257,8 +220,8 @@ document.addEventListener("DOMContentLoaded", () => {
 					this.publicShareForm.classList.remove("hidden");
 					this.publicShareGithubLogin.classList.add("hidden");
 					const githubProfileAnchor = document.createElement("a");
-					githubProfileAnchor.href = this.loggedUser.githubProfileURL;
-					githubProfileAnchor.innerText = this.loggedUser.githubLogin;
+					githubProfileAnchor.href = window.loggedUser.githubProfileURL;
+					githubProfileAnchor.innerText = window.loggedUser.githubLogin;
 					this.publicShareLoggedAS.replaceChildren("Share as: ", githubProfileAnchor);
 					this.publicShareLoggedAS.classList.remove("hidden");
 				}
