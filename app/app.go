@@ -54,24 +54,65 @@ func (e *debugError) Error() string { return e.Err.Error() }
 func (h errHandler) Handler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := h(w, r); err != nil {
+			type ResponseWriterWithError interface {
+				http.ResponseWriter
+				AddDebugError(err error)
+				AddCriticalError(err error)
+			}
+			w := w.(ResponseWriterWithError)
 			switch v := err.(type) {
 			case *httpError:
 				w.WriteHeader(v.ResponseCode)
-				log.Printf("debug error: %v", v.DebugErr)
+				w.AddDebugError(v.DebugErr)
 			case *afterWriteHeaderError:
-				// TODO: better logging, and use ConnectionError to pioritize the logging mechanism,
-				// if connectonerror == true, then it it should be like debug, if not then error.
 				if v.ConnectionError {
-					log.Printf("connection error: %v", err)
+					w.AddDebugError(v.Err)
 				} else {
-					log.Printf("error: %v", err)
+					w.AddCriticalError(v.Err)
 				}
 			case *debugError:
-				log.Printf("debug error: %v", err)
+				w.AddDebugError(v.Err)
 			default:
 				w.WriteHeader(http.StatusInternalServerError)
-				log.Printf("error: %v", err)
+				w.AddCriticalError(err)
 			}
+		}
+
+	}
+}
+
+type captureResposeWriter struct {
+	http.ResponseWriter
+	status      int
+	debugError  error
+	criticalErr error
+}
+
+func (w *captureResposeWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *captureResposeWriter) AddDebugError(err error) {
+	w.debugError = err
+}
+
+func (w *captureResposeWriter) AddCriticalError(err error) {
+	w.criticalErr = err
+}
+
+func loggingMiddleware(h http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		crw := &captureResposeWriter{ResponseWriter: w}
+		h.ServeHTTP(crw, r)
+
+		switch {
+		case crw.criticalErr != nil:
+			log.Printf("error: path='%v' remote='%v' status='%v' error='%v'", r.URL, r.RemoteAddr, crw.status, crw.criticalErr)
+		case crw.debugError != nil:
+			log.Printf("debug: path='%v' remote='%v' status='%v' debug='%v'", r.URL, r.RemoteAddr, crw.status, crw.debugError)
+		default:
+			log.Printf("debug: path='%v' remote='%v' status='%v'", r.URL, r.RemoteAddr, crw.status)
 		}
 	}
 }
@@ -129,9 +170,7 @@ func NewApplication(oauth OAuth, session SessionService, publicShares PublicShar
 }
 
 func (a *application) Start() error {
-	mux := http.NewServeMux()
-	a.setRoutes(mux)
-	return http.ListenAndServe("localhost:8888", mux)
+	return http.ListenAndServe("localhost:8888", a.setRoutes())
 }
 
 func httpMethod(method string, handler errHandler) errHandler {
@@ -156,7 +195,9 @@ func requireJSONContentType(handler errHandler) errHandler {
 	}
 }
 
-func (a *application) setRoutes(mux *http.ServeMux) {
+func (a *application) setRoutes() http.Handler {
+	mux := http.NewServeMux()
+
 	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
 
 	mux.HandleFunc("/share/", httpMethod(http.MethodGet, a.shareInfo).Handler())
@@ -237,4 +278,6 @@ func (a *application) setRoutes(mux *http.ServeMux) {
 		// TODO: same thing here as with sendJSON for error handling.
 		templates.Index(w)
 	})
+
+	return loggingMiddleware(mux)
 }

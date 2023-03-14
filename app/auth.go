@@ -174,6 +174,10 @@ func (a *application) userInfo(w http.ResponseWriter, r *http.Request) error {
 func (a *application) logout(w http.ResponseWriter, r *http.Request) error {
 	if s, err := r.Cookie("__Host-session"); err == nil {
 		if err := a.sessionService.RemoveSession(s.Value); err != nil {
+			if errors.As(err, new(service.PublicError)) {
+				w.WriteHeader(http.StatusBadRequest)
+				return &debugError{err}
+			}
 			return err
 		}
 	}
