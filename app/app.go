@@ -8,6 +8,7 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"time"
 
 	"github.com/mateusz834/charts/service"
 	"github.com/mateusz834/charts/templates"
@@ -220,7 +221,10 @@ func requireJSONContentType(handler errHandler) errHandler {
 func (a *application) setRoutes() http.Handler {
 	mux := http.NewServeMux()
 
-	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
+	mux.Handle("/assets/", cacheMiddleware(time.Hour, func(w http.ResponseWriter, r *http.Request) error {
+		http.FileServer(http.FS(assets)).ServeHTTP(w, r)
+		return nil
+	}).Handler())
 
 	mux.HandleFunc("/share/", httpMethod(http.MethodGet, a.shareInfo).Handler())
 
@@ -277,19 +281,19 @@ func (a *application) setRoutes() http.Handler {
 	mux.Handle("/get-all-user-shares", httpMethod(http.MethodGet, a.auth(a.getAllUserShares)).Handler())
 	mux.Handle("/logout", httpMethod(http.MethodGet, a.logout).Handler())
 
-	mux.Handle("/s/", errHandler(func(w http.ResponseWriter, r *http.Request) error {
+	mux.Handle("/s/", cacheMiddleware(time.Hour, func(w http.ResponseWriter, r *http.Request) error {
 		return sendHTMLFunc(w, http.StatusOK, func(w io.Writer) error {
 			return templates.Share(w)
 		})
 	}).Handler())
 
-	mux.Handle("/my-shares", errHandler(func(w http.ResponseWriter, r *http.Request) error {
+	mux.Handle("/my-shares", cacheMiddleware(time.Hour, func(w http.ResponseWriter, r *http.Request) error {
 		return sendHTMLFunc(w, http.StatusOK, func(w io.Writer) error {
 			return templates.MyShares(w)
 		})
 	}).Handler())
 
-	mux.Handle("/", errHandler(func(w http.ResponseWriter, r *http.Request) error {
+	mux.Handle("/", cacheMiddleware(time.Hour, func(w http.ResponseWriter, r *http.Request) error {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
 			return nil
@@ -301,4 +305,11 @@ func (a *application) setRoutes() http.Handler {
 	}).Handler())
 
 	return loggingMiddleware(mux)
+}
+
+func cacheMiddleware(duration time.Duration, handler errHandler) errHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%v", int(duration.Seconds())))
+		return handler(w, r)
+	}
 }
