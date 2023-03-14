@@ -151,6 +151,18 @@ func sendJSON(w http.ResponseWriter, status int, content any) error {
 	return nil
 }
 
+func sendHTMLFunc(w http.ResponseWriter, status int, f func(w io.Writer) error) error {
+	w.Header().Add("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
+	if err := f(writerErrorWrapper{w}); err != nil {
+		if v, ok := err.(writeError); ok {
+			return &afterWriteHeaderError{Err: v.error, ConnectionError: true}
+		}
+		return &afterWriteHeaderError{Err: err}
+	}
+	return nil
+}
+
 type SessionService interface {
 	NewSession(githubUserID uint64) (string, error)
 	IsSessionValid(session string) (uint64, error)
@@ -211,12 +223,6 @@ func (a *application) setRoutes() http.Handler {
 	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
 
 	mux.HandleFunc("/share/", httpMethod(http.MethodGet, a.shareInfo).Handler())
-	mux.HandleFunc("/s/", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		// TODO: same thing here as with sendJSON for error handling.
-		templates.Share(w)
-	})
 
 	mux.Handle("/github-login", httpMethod(http.MethodGet, a.githubLogin).Handler())
 	mux.Handle("/github-login-callback", httpMethod(http.MethodGet, a.githubLoginCallback).Handler())
@@ -271,23 +277,28 @@ func (a *application) setRoutes() http.Handler {
 	mux.Handle("/get-all-user-shares", httpMethod(http.MethodGet, a.auth(a.getAllUserShares)).Handler())
 	mux.Handle("/logout", httpMethod(http.MethodGet, a.logout).Handler())
 
-	mux.HandleFunc("/my-shares", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		// TODO: same thing here as with sendJSON for error handling.
-		templates.MyShares(w)
-	})
+	mux.Handle("/s/", errHandler(func(w http.ResponseWriter, r *http.Request) error {
+		return sendHTMLFunc(w, http.StatusOK, func(w io.Writer) error {
+			return templates.Share(w)
+		})
+	}).Handler())
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/my-shares", errHandler(func(w http.ResponseWriter, r *http.Request) error {
+		return sendHTMLFunc(w, http.StatusOK, func(w io.Writer) error {
+			return templates.MyShares(w)
+		})
+	}).Handler())
+
+	mux.Handle("/", errHandler(func(w http.ResponseWriter, r *http.Request) error {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
-			return
+			return nil
 		}
-		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		// TODO: same thing here as with sendJSON for error handling.
-		templates.Index(w)
-	})
+
+		return sendHTMLFunc(w, http.StatusOK, func(w io.Writer) error {
+			return templates.Index(w)
+		})
+	}).Handler())
 
 	return loggingMiddleware(mux)
 }
