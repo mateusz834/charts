@@ -53,12 +53,13 @@ func (e *debugError) Error() string { return e.Err.Error() }
 // Response code an the body can be controlled with *httpError.
 func (h errHandler) Handler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		type ResponseWriterWithError interface {
+			http.ResponseWriter
+			AddDebugError(err error)
+			AddCriticalError(err error)
+		}
+
 		if err := h(w, r); err != nil {
-			type ResponseWriterWithError interface {
-				http.ResponseWriter
-				AddDebugError(err error)
-				AddCriticalError(err error)
-			}
 			w := w.(ResponseWriterWithError)
 			switch v := err.(type) {
 			case *httpError:
@@ -66,7 +67,7 @@ func (h errHandler) Handler() http.HandlerFunc {
 				w.AddDebugError(v.DebugErr)
 			case *afterWriteHeaderError:
 				if v.ConnectionError {
-					w.AddDebugError(v.Err)
+					w.AddDebugError(fmt.Errorf("error after writing status code: %v", v.Err))
 				} else {
 					w.AddCriticalError(v.Err)
 				}
@@ -78,6 +79,11 @@ func (h errHandler) Handler() http.HandlerFunc {
 			}
 		}
 
+		// Call Flush, so that we get all connection errors logged.
+		rc := http.NewResponseController(w)
+		if err := rc.Flush(); err != nil {
+			w.(ResponseWriterWithError).AddDebugError(fmt.Errorf("error after writing status code: %v", err))
+		}
 	}
 }
 
@@ -86,6 +92,10 @@ type captureResposeWriter struct {
 	status      int
 	debugError  error
 	criticalErr error
+}
+
+func (c *captureResposeWriter) Unwrap() http.ResponseWriter {
+	return c.ResponseWriter
 }
 
 func (w *captureResposeWriter) WriteHeader(status int) {
