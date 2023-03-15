@@ -81,7 +81,7 @@ func (a *application) githubLogin(w http.ResponseWriter, r *http.Request) error 
 	}
 	query := url.Values{}
 	query.Add("response_type", "code")
-	query.Add("client_id", "14e6190e978637376f67")
+	query.Add("client_id", a.githubOAuth.ClientID)
 	query.Add("state", csrf)
 	query.Add("scope", "")
 	authUrl.RawQuery = query.Encode()

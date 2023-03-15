@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/mateusz834/charts/app"
+	"github.com/mateusz834/charts/log"
 	"github.com/mateusz834/charts/service"
 	"github.com/mateusz834/charts/storage"
 )
@@ -31,17 +32,24 @@ func run() error {
 	sessionService := service.NewSessionService(&db)
 	sharesService := service.NewSharesService(&db)
 
+	var logger log.Logger = &log.ConsoleLogger{}
+	if c.Syslog {
+		logger = log.NewSyslogLogger()
+	}
+
 	a := app.NewApplication(app.OAuth{
 		TokenURL:     "https://github.com/login/oauth/access_token",
-		ClientID:     "14e6190e978637376f67",
+		ClientID:     c.ClientID,
 		ClientSecret: c.ClientSecret,
-	}, &sessionService, &sharesService)
+	}, logger, &sessionService, &sharesService)
 
 	return a.Start()
 }
 
 type Config struct {
 	ClientSecret string
+	ClientID     string
+	Syslog       bool
 }
 
 func LoadConfig(path string) (*Config, error) {

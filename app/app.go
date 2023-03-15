@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"mime"
 	"net/http"
 	"time"
 
+	"github.com/mateusz834/charts/log"
 	"github.com/mateusz834/charts/service"
 	"github.com/mateusz834/charts/templates"
 )
@@ -112,18 +112,18 @@ func (w *captureResposeWriter) AddCriticalError(err error) {
 	w.criticalErr = err
 }
 
-func loggingMiddleware(h http.Handler) http.HandlerFunc {
+func loggingMiddleware(log log.Logger, h http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		crw := &captureResposeWriter{ResponseWriter: w}
 		h.ServeHTTP(crw, r)
 
 		switch {
 		case crw.criticalErr != nil:
-			log.Printf("error: path='%v' remote='%v' status='%v' error='%v'", r.URL, r.RemoteAddr, crw.status, crw.criticalErr)
+			log.Error(fmt.Sprintf("error: path='%v' remote='%v' status='%v' error='%v'", r.URL, r.RemoteAddr, crw.status, crw.criticalErr))
 		case crw.debugError != nil:
-			log.Printf("debug: path='%v' remote='%v' status='%v' debug='%v'", r.URL, r.RemoteAddr, crw.status, crw.debugError)
+			log.Debug(fmt.Sprintf("path='%v' remote='%v' status='%v' debug='%v'", r.URL, r.RemoteAddr, crw.status, crw.debugError))
 		default:
-			log.Printf("debug: path='%v' remote='%v' status='%v'", r.URL, r.RemoteAddr, crw.status)
+			log.Debug(fmt.Sprintf("path='%v' remote='%v' status='%v'", r.URL, r.RemoteAddr, crw.status))
 		}
 	}
 }
@@ -179,13 +179,16 @@ type PublicSharesService interface {
 }
 
 type application struct {
+	log log.Logger
+
 	githubOAuth         OAuth
 	sessionService      SessionService
 	publicSharesService PublicSharesService
 }
 
-func NewApplication(oauth OAuth, session SessionService, publicShares PublicSharesService) *application {
+func NewApplication(oauth OAuth, logger log.Logger, session SessionService, publicShares PublicSharesService) *application {
 	return &application{
+		log:                 logger,
 		githubOAuth:         oauth,
 		sessionService:      session,
 		publicSharesService: publicShares,
@@ -304,7 +307,7 @@ func (a *application) setRoutes() http.Handler {
 		})
 	}).Handler())
 
-	return loggingMiddleware(mux)
+	return loggingMiddleware(a.log, mux)
 }
 
 func cacheMiddleware(duration time.Duration, handler errHandler) errHandler {
