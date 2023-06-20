@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 
@@ -19,12 +20,15 @@ func main() {
 }
 
 func run() error {
-	c, err := LoadConfig("config.json")
+	confPath := flag.String("config", "./config.json", "")
+	flag.Parse()
+
+	c, err := LoadConfig(*confPath)
 	if err != nil {
 		return err
 	}
 
-	db, err := storage.NewSqliteStorage("./db.db")
+	db, err := storage.NewSqliteStorage(c.DB)
 	if err != nil {
 		return err
 	}
@@ -43,13 +47,15 @@ func run() error {
 		ClientSecret: c.ClientSecret,
 	}, logger, &sessionService, &sharesService)
 
-	return a.Start()
+	return a.Start(c.Addr)
 }
 
 type Config struct {
 	ClientSecret string
 	ClientID     string
 	Syslog       bool
+	Addr         string
+	DB           string
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -58,7 +64,10 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 
-	c := &Config{}
+	c := &Config{
+		Addr: "127.0.0.1:8888",
+	}
+
 	if err := json.NewDecoder(f).Decode(c); err != nil {
 		return nil, err
 	}

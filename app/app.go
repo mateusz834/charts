@@ -195,8 +195,8 @@ func NewApplication(oauth OAuth, logger log.Logger, session SessionService, publ
 	}
 }
 
-func (a *application) Start() error {
-	return http.ListenAndServe("localhost:8888", a.setRoutes())
+func (a *application) Start(addr string) error {
+	return http.ListenAndServe(addr, a.setRoutes())
 }
 
 func httpMethod(method string, handler errHandler) errHandler {
